@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent 101 — Live Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #031114;
+  --bg2: rgba(5,48,87,0.88);
+  --bg3: rgba(5,48,87,0.62);
+  --bg4: rgba(162,243,243,0.12);
+  --border: rgba(162,243,243,0.16);
+  --border2: rgba(29,244,244,0.32);
+  --text: #ffffff;
+  --text2: rgba(255,255,255,0.78);
+  --text3: rgba(162,243,243,0.72);
+  --accent: #1df4f4;
+  --accent-soft: rgba(29,244,244,0.14);
+  --accent-soft-strong: rgba(29,244,244,0.22);
+  --accent-pale: #a2f3f3;
+  --font-display: "Montserrat", "DM Sans", system-ui, sans-serif;
+  --font-body: "Montserrat", "DM Sans", system-ui, sans-serif;
+  --font-mono: "DM Mono", monospace;
+  --c-orch:    #ffffff;
+  --c-guide:   #a2f3f3;
+  --c-concept: #1df4f4;
+  --c-viz:     #a2f3f3;
+  --c-code:    #1df4f4;
+  --c-bp:      #ffffff;
+  --c-mcp:     #a2f3f3;
+  --c-deploy:  #1df4f4;
+  --c-qa:      #a2f3f3;
+  --c-scribe:  #ffffff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(29,244,244,0.14), transparent 28%),
+    radial-gradient(circle at top right, rgba(162,243,243,0.12), transparent 24%),
+    linear-gradient(180deg, #053057 0%, #031114 68%);
+  color: var(--text);
+  font-family: var(--font-body);
+  overflow: hidden;
+  font-size: 14px;
+}
+
+#shell { display: grid; grid-template-columns: 220px 1fr 260px; grid-template-rows: 52px 1fr 68px; height: 100vh; min-height: 0; overflow: hidden; }
+#shell > * { min-height: 0; }
+
+/* Topbar */
+#topbar { grid-column: 1/-1; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 1px solid var(--border); background: rgba(3,17,20,0.84); backdrop-filter: blur(14px); z-index: 10; }
+.logo { font-family: var(--font-display); font-size: 19px; letter-spacing: 0.03em; }
+.logo em { color: var(--accent); font-style: italic; }
+#stage-track { display: flex; align-items: center; }
+.stage-pip { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 11px; color: var(--text3); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+.stage-pip:hover { color: var(--text2); }
+.stage-pip.active { background: var(--bg3); color: var(--text); }
+.stage-pip.done { color: var(--text2); }
+.stage-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.5; }
+.stage-pip.active .stage-dot { opacity: 1; background: var(--accent); }
+#topbar-right { display: flex; gap: 8px; }
+.pill-btn { padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border2); background: transparent; color: var(--text2); font-family: var(--font-body); font-size: 12px; cursor: pointer; transition: all 0.15s; }
+.pill-btn:hover { background: var(--accent-soft); color: var(--text); }
+.pill-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.pill-btn.primary:hover { opacity: 0.85; }
+.pill-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Sidebar */
+#sidebar { border-right: 1px solid var(--border); background: rgba(3,17,20,0.78); backdrop-filter: blur(12px); display: flex; flex-direction: column; overflow: hidden; }
+#sidebar-head { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
+#sidebar-head h3 { font-size: 10px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text3); font-family: var(--font-display); }
+#agent-list { flex: 1; overflow-y: auto; padding: 8px; -webkit-overflow-scrolling: touch; }
+#agent-list::-webkit-scrollbar { display: none; }
+.agent-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer; transition: background 0.15s; margin-bottom: 2px; }
+.agent-row:hover { background: rgba(29,244,244,0.08); }
+.agent-row.selected { background: var(--accent-soft); outline: 1px solid var(--border2); }
+.agent-row.firing { background: var(--bg4); }
+.agent-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; border: 1px solid var(--border2); font-family: var(--font-mono); }
+.agent-info { min-width: 0; flex: 1; }
+.agent-name { font-size: 13px; font-weight: 500; color: var(--text); font-family: var(--font-display); letter-spacing: 0.02em; }
+.agent-desc { font-size: 11px; color: var(--text3); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.agent-status-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--bg4); flex-shrink: 0; transition: background 0.3s; }
+.agent-row.firing .agent-status-dot { background: #fff; animation: blink-dot 0.6s infinite; }
+@keyframes blink-dot { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+#sidebar-prompts { padding: 10px 8px; border-top: 1px solid var(--border); }
+#sidebar-prompts h4 { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); padding: 0 8px 8px; font-weight: 500; font-family: var(--font-display); }
+.prompt-chip { display: block; width: 100%; text-align: left; padding: 7px 10px; border-radius: 7px; margin-bottom: 3px; background: transparent; border: 1px solid var(--border); color: var(--text2); font-size: 12px; cursor: pointer; font-family: var(--font-body); transition: all 0.15s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prompt-chip:hover { background: var(--accent-soft); border-color: var(--border2); color: var(--text); }
+
+/* Main */
+#main { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: rgba(5,48,87,0.48); overflow: hidden; }
+#trace-bar { height: 36px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; gap: 6px; background: rgba(3,17,20,0.72); overflow-x: auto; flex-shrink: 0; }
+#trace-bar::-webkit-scrollbar { display: none; }
+.trace-empty { font-size: 11px; color: var(--text3); }
+.trace-tag { padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; border: 1px solid var(--border2); }
+.trace-arrow { color: var(--text3); font-size: 10px; }
+.trace-reason { font-size: 11px; color: var(--text3); font-style: italic; white-space: nowrap; }
+
+#chat { flex: 1; min-height: 0; overflow-y: auto; padding: 20px 20px 8px; display: flex; flex-direction: column; gap: 16px; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+#chat::-webkit-scrollbar { width: 3px; }
+#chat::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
+
+.msg-user { align-self: flex-end; max-width: 65%; background: rgba(29,244,244,0.12); border: 1px solid var(--border2); border-radius: 16px 16px 4px 16px; padding: 10px 14px; font-size: 14px; line-height: 1.55; }
+.msg-agent { align-self: flex-start; width: 100%; }
+.msg-agent-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.msg-agent-tag { padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; border: 1px solid var(--border2); }
+.msg-agent-time { font-size: 11px; color: var(--text3); }
+.msg-agent-bubble { background: rgba(5,48,87,0.56); border: 1px solid var(--border); border-radius: 4px 16px 16px 16px; padding: 14px 16px; font-size: 14px; line-height: 1.65; backdrop-filter: blur(10px); }
+.msg-agent-bubble p { margin-bottom: 10px; }
+.msg-agent-bubble p:last-child { margin-bottom: 0; }
+.msg-agent-bubble strong { color: var(--accent-pale); font-weight: 500; }
+.msg-agent-bubble em { color: var(--text2); font-style: italic; }
+.msg-agent-bubble pre { background: rgba(3,17,20,0.88); border: 1px solid var(--border2); border-radius: 8px; padding: 12px 14px; margin: 10px 0; font-family: var(--font-mono); font-size: 12px; line-height: 1.6; overflow-x: auto; color: var(--accent-pale); white-space: pre-wrap; }
+.msg-agent-bubble code { font-family: var(--font-mono); font-size: 12px; background: rgba(29,244,244,0.12); padding: 1px 5px; border-radius: 4px; color: var(--accent); }
+.msg-agent-bubble ul, .msg-agent-bubble ol { padding-left: 18px; margin: 8px 0; }
+.msg-agent-bubble li { margin-bottom: 4px; line-height: 1.55; }
+.msg-agent-bubble h4 { font-size: 13px; font-weight: 500; color: var(--text); margin: 12px 0 6px; font-family: var(--font-display); letter-spacing: 0.02em; }
+
+.viz-frame { margin: 4px 0; background: rgba(3,17,20,0.88); border: 1px solid var(--border2); border-radius: 8px; overflow: hidden; }
+.viz-frame svg { display: block; width: 100%; }
+.viz-frame text { font-size: 9px; }
+.viz-fallback { font-size: 12px; color: var(--text2); }
+.scribe-doc { background: rgba(3,17,20,0.88); border: 1px solid var(--border2); border-radius: 8px; padding: 16px; font-family: var(--font-mono); font-size: 12px; line-height: 1.7; color: var(--text2); white-space: pre-wrap; overflow-x: auto; margin: 4px 0; }
+
+.thinking-msg { align-self: flex-start; }
+.thinking-dots { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: rgba(5,48,87,0.56); border-radius: 4px 16px 16px 16px; border: 1px solid var(--border); }
+.thinking-label { font-size: 12px; color: var(--text3); }
+.dot-pulse span { display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: var(--text3); margin: 0 1px; animation: dotpulse 1.2s infinite; }
+.dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
+.dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dotpulse { 0%,80%,100%{opacity:0.2;transform:scale(0.8)} 40%{opacity:1;transform:scale(1)} }
+
+/* Right panel */
+#rightpanel { border-left: 1px solid var(--border); background: rgba(3,17,20,0.78); backdrop-filter: blur(12px); display: flex; flex-direction: column; overflow: hidden; }
+#rp-head { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
+#rp-head h3 { font-size: 10px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text3); font-family: var(--font-display); }
+#rp-body { flex: 1; overflow-y: auto; padding: 12px; -webkit-overflow-scrolling: touch; }
+#rp-body::-webkit-scrollbar { display: none; }
+.rp-section { margin-bottom: 20px; }
+.rp-section h4 { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 8px; font-family: var(--font-display); }
+.flow-card { background: rgba(5,48,87,0.56); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 6px; display: flex; align-items: flex-start; gap: 8px; }
+.flow-num { font-size: 10px; font-weight: 500; color: var(--text3); min-width: 14px; margin-top: 1px; }
+.flow-text { font-size: 12px; color: var(--text2); line-height: 1.5; }
+.flow-text strong { color: var(--text); font-weight: 500; }
+.stat-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.stat-row:last-child { border-bottom: none; }
+.stat-label { font-size: 12px; color: var(--text2); }
+.stat-value { font-size: 12px; font-weight: 500; color: var(--text); font-family: var(--font-mono); }
+
+/* Input */
+#inputbar { grid-column: 1/-1; border-top: 1px solid var(--border); background: rgba(3,17,20,0.84); padding: 12px 20px; display: flex; gap: 10px; align-items: flex-end; backdrop-filter: blur(14px); }
+#user-input { flex: 1; background: rgba(5,48,87,0.56); border: 1px solid var(--border2); border-radius: 12px; padding: 10px 14px; color: var(--text); font-family: var(--font-body); font-size: 14px; resize: none; min-height: 44px; max-height: 120px; line-height: 1.5; transition: border-color 0.15s; }
+#user-input:focus { outline: none; border-color: var(--accent); }
+#user-input::placeholder { color: var(--text3); }
+#send-btn { padding: 10px 18px; border-radius: 12px; background: var(--accent); border: none; color: var(--bg); font-family: var(--font-body); font-size: 14px; font-weight: 500; cursor: pointer; transition: opacity 0.15s; }
+#send-btn:hover { opacity: 0.85; }
+#send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+#input-hint { font-size: 11px; color: var(--text3); padding-top: 4px; }
+
+/* Agent tag colours */
+.tag-orch    { color: var(--c-orch);    border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); }
+.tag-guide   { color: var(--c-guide);   border-color: rgba(162,243,243,0.24); background: rgba(162,243,243,0.08); }
+.tag-concept { color: var(--c-concept); border-color: rgba(29,244,244,0.24);  background: rgba(29,244,244,0.08); }
+.tag-viz     { color: var(--c-viz);     border-color: rgba(162,243,243,0.24); background: rgba(162,243,243,0.08); }
+.tag-code    { color: var(--c-code);    border-color: rgba(29,244,244,0.24);  background: rgba(29,244,244,0.08); }
+.tag-bp      { color: var(--c-bp);      border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); }
+.tag-mcp     { color: var(--c-mcp);     border-color: rgba(162,243,243,0.24); background: rgba(162,243,243,0.08); }
+.tag-deploy  { color: var(--c-deploy);  border-color: rgba(29,244,244,0.24);  background: rgba(29,244,244,0.08); }
+.tag-qa      { color: var(--c-qa);      border-color: rgba(162,243,243,0.24); background: rgba(162,243,243,0.08); }
+.tag-scribe  { color: var(--c-scribe);  border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); }
+</style>
+</head>
+<body>
+<div id="shell">
+
+  <header id="topbar">
+    <div class="logo">Agent <em>101</em> — Live Demo</div>
+    <div id="stage-track">
+      <div class="stage-pip active" onclick="setStage(0)"><span class="stage-dot"></span>Intro</div>
+      <div class="stage-pip" onclick="setStage(1)"><span class="stage-dot"></span>Concepts</div>
+      <div class="stage-pip" onclick="setStage(2)"><span class="stage-dot"></span>Code</div>
+      <div class="stage-pip" onclick="setStage(3)"><span class="stage-dot"></span>Best Practices</div>
+      <div class="stage-pip" onclick="setStage(4)"><span class="stage-dot"></span>MCP</div>
+      <div class="stage-pip" onclick="setStage(5)"><span class="stage-dot"></span>Deploy</div>
+      <div class="stage-pip" onclick="setStage(6)"><span class="stage-dot"></span>Q&amp;A</div>
+      <div class="stage-pip" onclick="setStage(7)"><span class="stage-dot"></span>Wrap-up</div>
+    </div>
+    <div id="topbar-right">
+      <button class="pill-btn" onclick="clearSession()">Clear</button>
+      <button class="pill-btn" id="download-scribe-btn" onclick="downloadScribe()" disabled>Download Cheat Sheet PDF</button>
+      <button class="pill-btn primary" id="scribe-btn" onclick="generateScribe()">Generate Cheat Sheet ↗</button>
+    </div>
+  </header>
+
+  <aside id="sidebar">
+    <div id="sidebar-head"><h3>Agents</h3></div>
+    <div id="agent-list">
+      <div class="agent-row" id="row-orch">
+        <div class="agent-icon" style="background:rgba(255,255,255,0.06);color:var(--c-orch)">⬡</div>
+        <div class="agent-info"><div class="agent-name">Orchestrator</div><div class="agent-desc">Routes every message</div></div>
+        <div class="agent-status-dot"></div>
+      </div>
+      <div class="agent-row" id="row-guide">
+        <div class="agent-icon" style="background:rgba(162,243,243,0.08);color:var(--c-guide)">◈</div>
+        <div class="agent-info"><div class="agent-name">Guide</div><div class="agent-desc">Narrative &amp; transitions</div></div>
+        <div class="agent-status-dot"></div>
+      </div>
+      <div class="agent-row" id="row-concept">
+        <div class="agent-icon" style="background:rgba(29,244,244,0.08);color:var(--c-concept)">◎</div>
+        <div class="agent-info"><div class="agent-name">Concept</div><div class="agent-desc">Explanations &amp; theory</div></div>
+        <div class="agent-status-dot"></div>
+      </div>
+      <div class="agent-row" id="row-viz">
+        <div class="agent-icon" style="background:rgba(162,243,243,0.08);color:var(--c-viz)">◇</div>
+        <div class="agent-info"><div class="agent-name">Viz</div><div class="agent-desc">Diagrams &amp; visuals</div></div>
+        <div class="agent-status-dot"></div>
+      </div>
+      <div class="agent-row" id="row-code">
+        <div class="agent-icon" style="background:rgba(29,244,244,0.08);color:var(--c-code);font-size:11px">&lt;/&gt;</div>
+        <div class="agent-info"><div class="agent-name">Code</div><div class="agent-desc">Patterns &amp; examples</div></div>
+        <div class="agent-status-dot"></div>
+      </div>
+      <div class="agent-row" id="row-bp">
+        <div class="agent-icon" style="background:rgba(255,255,255,0.06);color:var(--c-bp)">⚑</div>
+        <div class="agent-info"><div class="agent-name">Best Practices</div><div class="agent-desc">Dos, don'ts, gotchas</div></div>
+        <div class="agent-status-dot"></div>
+      </div>
+      <div class="agent-row" id="row-mcp">
+        <div class="agent-icon" style="background:rgba(162,243,243,0.08);color:var(--c-mcp)">⬡</div>
+        <div class="agent-info"><div class="agent-name">MCP</div><div class="agent-desc">Model Context Protocol</div></div>
+        <div class="agent-status-dot"></div>
+      </div>
+      <div class="agent-row" id="row-deploy">
+        <div class="agent-icon" style="background:rgba(29,244,244,0.08);color:var(--c-deploy)">↑</div>
+        <div class="agent-info"><div class="agent-name">Deploy</div><div class="agent-desc">Hosting &amp; production</div></div>
+        <div class="agent-status-dot"></div>
+      </div>
+      <div class="agent-row" id="row-qa">
+        <div class="agent-icon" style="background:rgba(162,243,243,0.08);color:var(--c-qa);font-weight:500">?</div>
+        <div class="agent-info"><div class="agent-name">Q&amp;A</div><div class="agent-desc">Live audience questions</div></div>
+        <div class="agent-status-dot"></div>
+      </div>
+      <div class="agent-row" id="row-scribe">
+        <div class="agent-icon" style="background:rgba(255,255,255,0.06);color:var(--c-scribe)">✦</div>
+        <div class="agent-info"><div class="agent-name">Scribe</div><div class="agent-desc">Cheat sheet &amp; docs</div></div>
+        <div class="agent-status-dot"></div>
+      </div>
+    </div>
+    <div id="sidebar-prompts">
+      <h4>Quick prompts</h4>
+      <button class="prompt-chip" onclick="quickSend('What is an AI agent and how does it differ from a regular LLM call?')">What is an AI agent?</button>
+      <button class="prompt-chip" onclick="quickSend('Show me how to code an orchestrator agent in Python')">Code an orchestrator</button>
+      <button class="prompt-chip" onclick="quickSend('What are the top best practices when building agents?')">Best practices</button>
+      <button class="prompt-chip" onclick="quickSend('Explain MCP and why it matters for agents')">Explain MCP</button>
+      <button class="prompt-chip" onclick="quickSend('How do I deploy an agent to production?')">Deploy to production</button>
+      <button class="prompt-chip" onclick="quickSend('What is the difference between tool calling and function calling?')">Tool vs function calling</button>
+    </div>
+  </aside>
+
+  <main id="main">
+    <div id="trace-bar"><span class="trace-empty">Agent trace will appear here as you chat</span></div>
+    <div id="chat">
+      <div class="msg-agent">
+        <div class="msg-agent-header"><span class="msg-agent-tag tag-guide">Guide</span><span class="msg-agent-time">now</span></div>
+        <div class="msg-agent-bubble">
+          <p>Welcome to <strong>Agent 101</strong> — a live demo powered by a Python multi-agent backend.</p>
+          <p>Every response comes from specialist agents coordinated by an Orchestrator. Watch the <strong>trace bar</strong> and the <strong>agent panel</strong> to see routing decisions happen in real time.</p>
+          <p>Ask anything, or use the quick prompts on the left. Hit <strong>Generate Cheat Sheet</strong> at the end to get a summary of everything we covered.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <aside id="rightpanel">
+    <div id="rp-head"><h3>Session Info</h3></div>
+    <div id="rp-body">
+      <div class="rp-section">
+        <h4>Architecture</h4>
+        <svg viewBox="0 0 220 330" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%">
+          <rect x="60" y="8" width="100" height="30" rx="7" fill="rgba(200,200,224,0.1)" stroke="rgba(200,200,224,0.25)" stroke-width="1"/>
+          <text x="110" y="27" text-anchor="middle" fill="#ffffff" font-size="11" font-family="Montserrat">Orchestrator</text>
+          <line x1="110" y1="38" x2="110" y2="54" stroke="rgba(162,243,243,0.18)" stroke-width="1"/>
+          <line x1="30" y1="54" x2="190" y2="54" stroke="rgba(162,243,243,0.14)" stroke-width="1"/>
+          <line x1="30" y1="54" x2="30" y2="300" stroke="rgba(162,243,243,0.08)" stroke-width="1"/>
+          <line x1="190" y1="54" x2="190" y2="300" stroke="rgba(162,243,243,0.08)" stroke-width="1"/>
+          <!-- Guide -->
+          <line x1="30" y1="74" x2="55" y2="74" stroke="rgba(240,201,107,0.3)" stroke-width="1"/>
+          <rect x="55" y="62" width="110" height="24" rx="6" fill="rgba(240,201,107,0.07)" stroke="rgba(240,201,107,0.2)" stroke-width="1"/>
+          <text x="110" y="78" text-anchor="middle" fill="#a2f3f3" font-size="10" font-family="Montserrat">Guide</text>
+          <!-- Concept -->
+          <line x1="30" y1="110" x2="55" y2="110" stroke="rgba(94,196,232,0.3)" stroke-width="1"/>
+          <rect x="55" y="98" width="50" height="24" rx="6" fill="rgba(94,196,232,0.07)" stroke="rgba(94,196,232,0.2)" stroke-width="1"/>
+          <text x="80" y="114" text-anchor="middle" fill="#1df4f4" font-size="10" font-family="Montserrat">Concept</text>
+          <!-- Viz -->
+          <line x1="190" y1="110" x2="165" y2="110" stroke="rgba(165,148,255,0.3)" stroke-width="1"/>
+          <rect x="115" y="98" width="50" height="24" rx="6" fill="rgba(165,148,255,0.07)" stroke="rgba(165,148,255,0.2)" stroke-width="1"/>
+          <text x="140" y="114" text-anchor="middle" fill="#a2f3f3" font-size="10" font-family="Montserrat">Viz</text>
+          <text x="110" y="95" text-anchor="middle" fill="rgba(162,243,243,0.46)" font-size="9" font-family="Montserrat">supports</text>
+          <!-- Code -->
+          <line x1="30" y1="148" x2="55" y2="148" stroke="rgba(94,232,168,0.3)" stroke-width="1"/>
+          <rect x="55" y="136" width="110" height="24" rx="6" fill="rgba(94,232,168,0.07)" stroke="rgba(94,232,168,0.2)" stroke-width="1"/>
+          <text x="110" y="152" text-anchor="middle" fill="#1df4f4" font-size="10" font-family="Montserrat">Code</text>
+          <!-- Best Practices -->
+          <line x1="190" y1="186" x2="165" y2="186" stroke="rgba(240,155,94,0.3)" stroke-width="1"/>
+          <rect x="55" y="174" width="110" height="24" rx="6" fill="rgba(240,155,94,0.07)" stroke="rgba(240,155,94,0.2)" stroke-width="1"/>
+          <text x="110" y="190" text-anchor="middle" fill="#ffffff" font-size="10" font-family="Montserrat">Best Practices</text>
+          <!-- MCP -->
+          <line x1="30" y1="224" x2="55" y2="224" stroke="rgba(208,107,240,0.3)" stroke-width="1"/>
+          <rect x="55" y="212" width="110" height="24" rx="6" fill="rgba(208,107,240,0.07)" stroke="rgba(208,107,240,0.2)" stroke-width="1"/>
+          <text x="110" y="228" text-anchor="middle" fill="#a2f3f3" font-size="10" font-family="Montserrat">MCP</text>
+          <!-- Deploy -->
+          <line x1="190" y1="262" x2="165" y2="262" stroke="rgba(94,170,240,0.3)" stroke-width="1"/>
+          <rect x="55" y="250" width="110" height="24" rx="6" fill="rgba(94,170,240,0.07)" stroke="rgba(94,170,240,0.2)" stroke-width="1"/>
+          <text x="110" y="266" text-anchor="middle" fill="#1df4f4" font-size="10" font-family="Montserrat">Deploy</text>
+          <!-- Q&A -->
+          <line x1="30" y1="300" x2="55" y2="300" stroke="rgba(168,240,94,0.3)" stroke-width="1"/>
+          <rect x="55" y="288" width="46" height="24" rx="6" fill="rgba(168,240,94,0.07)" stroke="rgba(168,240,94,0.2)" stroke-width="1"/>
+          <text x="78" y="304" text-anchor="middle" fill="#a2f3f3" font-size="10" font-family="Montserrat">Q&amp;A</text>
+          <!-- Scribe -->
+          <line x1="190" y1="300" x2="165" y2="300" stroke="rgba(240,94,138,0.3)" stroke-width="1"/>
+          <rect x="119" y="288" width="46" height="24" rx="6" fill="rgba(240,94,138,0.07)" stroke="rgba(240,94,138,0.2)" stroke-width="1"/>
+          <text x="142" y="304" text-anchor="middle" fill="#ffffff" font-size="10" font-family="Montserrat">Scribe</text>
+        </svg>
+      </div>
+      <div class="rp-section">
+        <h4>Session Stats</h4>
+        <div class="stat-row"><span class="stat-label">Messages</span><span class="stat-value" id="stat-msgs">0</span></div>
+        <div class="stat-row"><span class="stat-label">Agents fired</span><span class="stat-value" id="stat-agents">0</span></div>
+        <div class="stat-row"><span class="stat-label">Topics covered</span><span class="stat-value" id="stat-topics">0</span></div>
+        <div class="stat-row"><span class="stat-label">Stage</span><span class="stat-value" id="stat-stage">Intro</span></div>
+      </div>
+      <div class="rp-section">
+        <h4>How it works</h4>
+        <div class="flow-card"><span class="flow-num">1</span><span class="flow-text">Message hits the <strong>Python backend</strong></span></div>
+        <div class="flow-card"><span class="flow-num">2</span><span class="flow-text"><strong>Orchestrator</strong> classifies intent and picks agents</span></div>
+        <div class="flow-card"><span class="flow-num">3</span><span class="flow-text">Agents run — <strong>Concept</strong> explains first, then <strong>Viz</strong> turns that into a supporting diagram</span></div>
+        <div class="flow-card"><span class="flow-num">4</span><span class="flow-text"><strong>Scribe</strong> synthesises session into a cheat sheet</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <div id="inputbar">
+    <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+      <textarea id="user-input" placeholder="Ask anything about AI agents — or type a live audience question…" rows="1"></textarea>
+      <div id="input-hint">↵ to send · Shift+↵ new line</div>
+    </div>
+    <button id="send-btn" onclick="handleSend()">Send ↗</button>
+  </div>
+
+</div>
+
+<script>
+const STAGES = ['Intro','Concepts','Code','Best Practices','MCP','Deploy','Q&A','Wrap-up'];
+
+const AGENT_META = {
+  orch:    { label: 'Orchestrator', tag: 'tag-orch' },
+  guide:   { label: 'Guide',        tag: 'tag-guide' },
+  concept: { label: 'Concept',      tag: 'tag-concept' },
+  viz:     { label: 'Viz',          tag: 'tag-viz' },
+  code:    { label: 'Code',         tag: 'tag-code' },
+  bp:      { label: 'Best Practices', tag: 'tag-bp' },
+  mcp:     { label: 'MCP',          tag: 'tag-mcp' },
+  deploy:  { label: 'Deploy',       tag: 'tag-deploy' },
+  qa:      { label: 'Q&A',          tag: 'tag-qa' },
+  scribe:  { label: 'Scribe',       tag: 'tag-scribe' },
+};
+const SELECTABLE_AGENTS = ['guide', 'concept', 'viz', 'code', 'bp', 'mcp', 'deploy', 'qa'];
+
+const THINKING_STATUS = {
+  orch: [
+    'Routing your request',
+    'Choosing the right specialists',
+    'Drafting the response plan',
+    'Preparing the final handoff',
+  ],
+  guide: [
+    'Shaping the narrative',
+    'Choosing a clean transition',
+    'Keeping the explanation presenter-friendly',
+  ],
+  concept: [
+    'Framing a plain-language definition',
+    'Picking a useful analogy',
+    'Turning the concept into a clear explanation',
+  ],
+  viz: [
+    'Pulling out the key concept',
+    'Sketching a supporting visual',
+    'Aligning the diagram with the explanation',
+  ],
+  code: [
+    'Selecting the implementation pattern',
+    'Turning the idea into runnable code',
+    'Highlighting what matters in the example',
+  ],
+  bp: [
+    'Separating strong habits from common pitfalls',
+    'Choosing the highest-signal tradeoffs',
+    'Condensing the production lessons',
+  ],
+  mcp: [
+    'Mapping the protocol pieces',
+    'Connecting the explanation to real tooling',
+    'Distilling the interoperability story',
+  ],
+  deploy: [
+    'Lining up the production concerns',
+    'Balancing reliability, cost, and scale',
+    'Turning deployment tradeoffs into guidance',
+  ],
+  qa: [
+    'Forming a concise answer',
+    'Checking the edge cases',
+    'Tightening the audience-ready response',
+  ],
+  scribe: [
+    'Reviewing the session history',
+    'Pulling out the key takeaways',
+    'Formatting the cheat sheet',
+  ],
+  default: [
+    'Working through the response',
+    'Organizing the output',
+    'Preparing the final answer',
+  ],
+};
+
+let busy = false;
+const thinkingTimers = new Map();
+let lastScribeContent = '';
+const selectedAgents = new Set();
+
+function setStage(n) {
+  const pips = document.querySelectorAll('.stage-pip');
+  pips.forEach((el, i) => {
+    el.classList.remove('active', 'done');
+    if (i === n) el.classList.add('active');
+    else if (i < n) el.classList.add('done');
+  });
+  document.getElementById('stat-stage').textContent = STAGES[n];
+}
+
+function syncSelectedAgentUI() {
+  for (const agentKey of SELECTABLE_AGENTS) {
+    const row = document.getElementById(`row-${agentKey}`);
+    if (row) row.classList.toggle('selected', selectedAgents.has(agentKey));
+  }
+  const hint = document.getElementById('input-hint');
+  if (!hint) return;
+  if (selectedAgents.size) {
+    const labels = Array.from(selectedAgents).map(key => AGENT_META[key]?.label || key);
+    hint.textContent = `Selected agents: ${labels.join(', ')} · Send runs those agents directly · Shift+↵ new line`;
+  } else {
+    hint.textContent = '↵ to send · Shift+↵ new line';
+  }
+}
+
+function toggleAgentSelection(agentKey) {
+  if (!SELECTABLE_AGENTS.includes(agentKey)) return;
+  if (selectedAgents.has(agentKey)) selectedAgents.delete(agentKey);
+  else selectedAgents.add(agentKey);
+  syncSelectedAgentUI();
+}
+
+function fireRow(key, on) {
+  const row = document.getElementById(`row-${key}`);
+  if (row) row.classList.toggle('firing', on);
+}
+
+function setTrace(routing, agents) {
+  const bar = document.getElementById('trace-bar');
+  bar.innerHTML = '';
+
+  const orch = document.createElement('span');
+  orch.className = 'trace-tag tag-orch';
+  orch.textContent = 'Orchestrator';
+  bar.appendChild(orch);
+
+  const arr = document.createElement('span');
+  arr.className = 'trace-arrow'; arr.textContent = ' → ';
+  bar.appendChild(arr);
+
+  agents.forEach((a, i) => {
+    const meta = AGENT_META[a];
+    if (!meta) return;
+    const tag = document.createElement('span');
+    tag.className = `trace-tag ${meta.tag}`;
+    tag.textContent = meta.label;
+    bar.appendChild(tag);
+    if (i < agents.length - 1) {
+      const sep = document.createElement('span');
+      sep.className = 'trace-arrow'; sep.textContent = ' + ';
+      bar.appendChild(sep);
+    }
+  });
+
+  if (routing.reason) {
+    const reason = document.createElement('span');
+    reason.className = 'trace-reason';
+    reason.textContent = `  —  ${routing.reason}`;
+    bar.appendChild(reason);
+  }
+}
+
+function updateStats(stats) {
+  if (!stats) return;
+  document.getElementById('stat-msgs').textContent    = stats.message_count  || 0;
+  document.getElementById('stat-agents').textContent  = stats.agents_fired   || 0;
+  document.getElementById('stat-topics').textContent  = stats.topics_covered || 0;
+}
+
+function triggerDownload(filename, content, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function sanitizePdfText(text) {
+  const replacements = new Map([
+    ['\u2013', '-'],
+    ['\u2014', '-'],
+    ['\u2018', "'"],
+    ['\u2019', "'"],
+    ['\u201c', '"'],
+    ['\u201d', '"'],
+    ['\u2022', '-'],
+    ['\u2713', 'OK'],
+    ['\u2717', 'NO'],
+    ['\u2192', '->'],
+    ['\u00a0', ' '],
+  ]);
+  let sanitized = '';
+  for (const char of text) {
+    if (replacements.has(char)) {
+      sanitized += replacements.get(char);
+    } else {
+      sanitized += char.charCodeAt(0) <= 126 ? char : '?';
+    }
+  }
+  return sanitized;
+}
+
+function escapePdfText(text) {
+  return text.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+}
+
+function wrapPdfLine(line, maxChars) {
+  const words = line.split(/\s+/).filter(Boolean);
+  if (!words.length) return [''];
+
+  const wrapped = [];
+  let current = words[0];
+  for (const word of words.slice(1)) {
+    const candidate = `${current} ${word}`;
+    if (candidate.length <= maxChars) {
+      current = candidate;
+    } else {
+      wrapped.push(current);
+      current = word;
+    }
+  }
+  wrapped.push(current);
+  return wrapped;
+}
+
+function normalizeMarkdownInline(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\[(.+?)\]\([^)]+\)/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function markdownToPdfBlocks(markdown) {
+  const normalized = sanitizePdfText(markdown).replace(/\r/g, '');
+  const rawLines = normalized.split('\n');
+  const blocks = [];
+  let inCodeBlock = false;
+
+  for (const rawLine of rawLines) {
+    const line = rawLine.replace(/\s+$/, '');
+    const trimmed = line.trim();
+
+    if (trimmed.startsWith('```')) {
+      inCodeBlock = !inCodeBlock;
+      if (!inCodeBlock) blocks.push({ type: 'spacer', size: 8 });
+      continue;
+    }
+
+    if (inCodeBlock) {
+      blocks.push({ type: 'code', text: line || ' ' });
+      continue;
+    }
+
+    if (!trimmed) {
+      blocks.push({ type: 'spacer', size: 8 });
+    } else if (trimmed.startsWith('# ')) {
+      blocks.push({ type: 'h1', text: normalizeMarkdownInline(trimmed.slice(2)) });
+    } else if (trimmed.startsWith('## ')) {
+      blocks.push({ type: 'h2', text: normalizeMarkdownInline(trimmed.slice(3)) });
+    } else if (trimmed.startsWith('### ')) {
+      blocks.push({ type: 'h3', text: normalizeMarkdownInline(trimmed.slice(4)) });
+    } else if (/^[-*]\s+/.test(trimmed)) {
+      blocks.push({ type: 'bullet', text: normalizeMarkdownInline(trimmed.replace(/^[-*]\s+/, '')) });
+    } else if (/^\d+\.\s+/.test(trimmed)) {
+      blocks.push({ type: 'bullet', text: normalizeMarkdownInline(trimmed.replace(/^\d+\.\s+/, '')) });
+    } else {
+      blocks.push({ type: 'body', text: normalizeMarkdownInline(trimmed) });
+    }
+  }
+
+  return blocks;
+}
+
+function buildPdf(markdown) {
+  const pageWidth = 612;
+  const pageHeight = 792;
+  const left = 48;
+  const top = 744;
+  const bottom = 52;
+  const blocks = markdownToPdfBlocks(markdown);
+  const pages = [[]];
+  let page = pages[0];
+  let y = top;
+
+  const styles = {
+    h1:     { font: 'F2', size: 20, leading: 24, indent: left,     maxChars: 42, after: 10 },
+    h2:     { font: 'F2', size: 13, leading: 16, indent: left,     maxChars: 66, after: 6  },
+    h3:     { font: 'F2', size: 11, leading: 14, indent: left,     maxChars: 78, after: 4  },
+    body:   { font: 'F1', size: 11, leading: 14, indent: left,     maxChars: 88, after: 2  },
+    bullet: { font: 'F1', size: 11, leading: 14, indent: left + 14, maxChars: 80, after: 2  },
+    code:   { font: 'F3', size: 9,  leading: 12, indent: left + 12, maxChars: 84, after: 1  },
+  };
+
+  function newPage() {
+    page = [];
+    pages.push(page);
+    y = top;
+  }
+
+  function ensureSpace(heightNeeded) {
+    if (y - heightNeeded < bottom) newPage();
+  }
+
+  function addPdfLine(text, style, indent) {
+    ensureSpace(style.leading);
+    page.push(`BT /${style.font} ${style.size} Tf ${indent} ${y} Td (${escapePdfText(text)}) Tj ET`);
+    y -= style.leading;
+  }
+
+  function addWrappedText(text, style, prefix = '', continuationPrefix = '') {
+    const effectiveMax = Math.max(12, style.maxChars - prefix.length);
+    const wrapped = wrapPdfLine(text, effectiveMax);
+    wrapped.forEach((line, idx) => {
+      const linePrefix = idx === 0 ? prefix : continuationPrefix;
+      addPdfLine(`${linePrefix}${line}`, style, style.indent);
+    });
+    y -= style.after;
+  }
+
+  for (const block of blocks) {
+    if (block.type === 'spacer') {
+      y -= block.size || 8;
+      continue;
+    }
+
+    const style = styles[block.type] || styles.body;
+    if (block.type === 'h1' || block.type === 'h2' || block.type === 'h3') {
+      if (y < top - 8) y -= 4;
+      addWrappedText(block.text, style);
+    } else if (block.type === 'bullet') {
+      addWrappedText(block.text, style, '- ', '  ');
+    } else {
+      addWrappedText(block.text, style);
+    }
+  }
+
+  if (!pages.length || !pages[0].length) {
+    pages[0] = ['BT /F2 20 Tf 48 744 Td (Agent 101 Cheat Sheet) Tj ET'];
+  }
+
+  const objects = [];
+  objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+  objects[2] = `<< /Type /Pages /Kids [${pages.map((_, idx) => `${6 + idx * 2} 0 R`).join(' ')}] /Count ${pages.length} >>`;
+  objects[3] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>';
+  objects[4] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>';
+  objects[5] = '<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>';
+
+  pages.forEach((pageLines, idx) => {
+    const pageObjectId = 6 + idx * 2;
+    const contentObjectId = pageObjectId + 1;
+    const stream = pageLines.join('\n');
+    objects[pageObjectId] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents ${contentObjectId} 0 R >>`;
+    objects[contentObjectId] = `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`;
+  });
+
+  let pdf = '%PDF-1.4\n';
+  const offsets = [0];
+  for (let i = 1; i < objects.length; i++) {
+    offsets[i] = pdf.length;
+    pdf += `${i} 0 obj\n${objects[i]}\nendobj\n`;
+  }
+
+  const xrefOffset = pdf.length;
+  pdf += `xref\n0 ${objects.length}\n`;
+  pdf += '0000000000 65535 f \n';
+  for (let i = 1; i < objects.length; i++) {
+    pdf += `${String(offsets[i]).padStart(10, '0')} 00000 n \n`;
+  }
+  pdf += `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+  return pdf;
+}
+
+function downloadScribe() {
+  if (!lastScribeContent) return;
+  triggerDownload('agent-101-cheat-sheet.pdf', buildPdf(lastScribeContent), 'application/pdf');
+}
+
+function addUserMsg(text) {
+  const chat = document.getElementById('chat');
+  const el = document.createElement('div');
+  el.className = 'msg-user';
+  el.textContent = text;
+  chat.appendChild(el);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function addThinking(agentKey) {
+  const meta = AGENT_META[agentKey] || { label: agentKey, tag: 'tag-orch' };
+  const statuses = THINKING_STATUS[agentKey] || THINKING_STATUS.default;
+  const chat = document.getElementById('chat');
+  const id = `thinking-${agentKey}-${Date.now()}`;
+  const el = document.createElement('div');
+  el.className = 'msg-agent thinking-msg';
+  el.id = id;
+  el.innerHTML = `
+    <div class="msg-agent-header">
+      <span class="msg-agent-tag ${meta.tag}">${meta.label}</span>
+    </div>
+    <div class="thinking-dots">
+      <span class="dot-pulse"><span></span><span></span><span></span></span>
+      <span class="thinking-label">${statuses[0]}</span>
+    </div>`;
+  chat.appendChild(el);
+  chat.scrollTop = chat.scrollHeight;
+
+  if (statuses.length > 1) {
+    let idx = 0;
+    const timer = window.setInterval(() => {
+      const label = el.querySelector('.thinking-label');
+      if (!label) return;
+      idx = (idx + 1) % statuses.length;
+      label.textContent = statuses[idx];
+    }, 1100);
+    thinkingTimers.set(id, timer);
+  }
+
+  return id;
+}
+
+function removeThinking(id) {
+  const timer = thinkingTimers.get(id);
+  if (timer) {
+    window.clearInterval(timer);
+    thinkingTimers.delete(id);
+  }
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+function formatContent(text) {
+  let html = text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/```[\w]*\n?([\s\S]*?)```/g, (_, c) => `<pre>${c.trim()}</pre>`)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^#{1,4}\s+(.+)$/gm, '<h4>$1</h4>')
+    .replace(/^[-•✓✗]\s+(.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>[\s\S]*?<\/li>\n?)+/g, m => `<ul>${m}</ul>`)
+    .replace(/\n{2,}/g, '</p><p>')
+    .replace(/\n/g, '<br>');
+  if (!html.startsWith('<')) html = `<p>${html}</p>`;
+  return html;
+}
+
+function extractSvg(content) {
+  if (!content) return '';
+  const attempts = [content, content.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')];
+  for (const attempt of attempts) {
+    const match = attempt.match(/<svg[\s\S]*<\/svg>/i);
+    if (match) return match[0];
+  }
+  return '';
+}
+
+function addAgentMsg(agentKey, content, isViz) {
+  const meta = AGENT_META[agentKey] || { label: agentKey, tag: 'tag-orch' };
+  const chat = document.getElementById('chat');
+  const el = document.createElement('div');
+  el.className = 'msg-agent';
+  const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  let body = '';
+  if (isViz) {
+    const svg = extractSvg(content);
+    body = svg
+      ? `<div class="viz-frame">${svg}</div>`
+      : '<div class="viz-fallback">Viz agent returned no inline SVG for this turn.</div>';
+  } else if (agentKey === 'scribe') {
+    const safe = content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    body = `<div class="scribe-doc">${safe}</div>`;
+  } else {
+    body = formatContent(content);
+  }
+
+  if (!body) return;
+
+  el.innerHTML = `
+    <div class="msg-agent-header">
+      <span class="msg-agent-tag ${meta.tag}">${meta.label}</span>
+      <span class="msg-agent-time">${now}</span>
+    </div>
+    <div class="msg-agent-bubble">${body}</div>`;
+  chat.appendChild(el);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+async function handleSend() {
+  const input = document.getElementById('user-input');
+  const text = input.value.trim();
+  if (!text || busy) return;
+
+  busy = true;
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('send-btn').disabled = true;
+
+  addUserMsg(text);
+
+  // Show orchestrator thinking
+  fireRow('orch', true);
+  const orchThink = addThinking('orch');
+  let thinkIds = {};
+
+  try {
+    const routeRes = await fetch('/api/route', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text, forced_agents: Array.from(selectedAgents) }),
+    });
+
+    if (!routeRes.ok) throw new Error(`Routing error: ${routeRes.status}`);
+    const routeData = await routeRes.json();
+    const routing = routeData.routing || { agents: ['qa'], reason: 'Routing fallback' };
+
+    removeThinking(orchThink);
+    fireRow('orch', false);
+
+    setTrace(routing, routing.agents || []);
+    for (const agentKey of (routing.agents || [])) {
+      fireRow(agentKey, true);
+      thinkIds[agentKey] = addThinking(agentKey);
+    }
+
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text, routing }),
+    });
+
+    if (!res.ok) throw new Error(`Server error: ${res.status}`);
+    const data = await res.json();
+    updateStats(data.stats);
+
+    // Render responses
+    for (const resp of data.responses) {
+      removeThinking(thinkIds[resp.agent]);
+      fireRow(resp.agent, false);
+      addAgentMsg(resp.agent, resp.content, resp.is_viz);
+      delete thinkIds[resp.agent];
+    }
+
+    for (const [agentKey, thinkId] of Object.entries(thinkIds)) {
+      removeThinking(thinkId);
+      fireRow(agentKey, false);
+    }
+
+  } catch (err) {
+    removeThinking(orchThink);
+    fireRow('orch', false);
+    for (const thinkId of Object.values(thinkIds)) {
+      removeThinking(thinkId);
+    }
+    for (const agentKey of Object.keys(thinkIds)) {
+      fireRow(agentKey, false);
+    }
+    addAgentMsg('qa', `Error: ${err.message}. Is the Python server running?`, false);
+  }
+
+  busy = false;
+  document.getElementById('send-btn').disabled = false;
+  input.focus();
+}
+
+async function generateScribe() {
+  const btn = document.getElementById('scribe-btn');
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  fireRow('scribe', true);
+
+  const thinkId = addThinking('scribe');
+  try {
+    const res = await fetch('/api/scribe', { method: 'POST' });
+    const data = await res.json();
+    removeThinking(thinkId);
+    lastScribeContent = data.content || '';
+    document.getElementById('download-scribe-btn').disabled = !lastScribeContent;
+    addAgentMsg('scribe', data.content, false);
+    if (lastScribeContent) downloadScribe();
+    updateStats(data.stats);
+  } catch (err) {
+    removeThinking(thinkId);
+    addAgentMsg('qa', `Scribe error: ${err.message}`, false);
+  }
+
+  fireRow('scribe', false);
+  btn.disabled = false;
+  btn.textContent = 'Generate Cheat Sheet ↗';
+}
+
+async function clearSession() {
+  await fetch('/api/clear', { method: 'POST' });
+  for (const timer of thinkingTimers.values()) {
+    window.clearInterval(timer);
+  }
+  thinkingTimers.clear();
+  selectedAgents.clear();
+  syncSelectedAgentUI();
+  lastScribeContent = '';
+  document.getElementById('download-scribe-btn').disabled = true;
+  document.getElementById('chat').innerHTML = '';
+  document.getElementById('trace-bar').innerHTML = '<span class="trace-empty">Agent trace will appear here as you chat</span>';
+  ['stat-msgs','stat-agents','stat-topics'].forEach(id => document.getElementById(id).textContent = '0');
+  setStage(0);
+}
+
+function quickSend(text) {
+  document.getElementById('user-input').value = text;
+  handleSend();
+}
+
+// Auto-resize textarea
+const textarea = document.getElementById('user-input');
+for (const agentKey of SELECTABLE_AGENTS) {
+  const row = document.getElementById(`row-${agentKey}`);
+  if (row) row.addEventListener('click', () => toggleAgentSelection(agentKey));
+}
+syncSelectedAgentUI();
+textarea.addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+textarea.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent 101 — Live Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0c0c0f;
+  --bg2: #131318;
+  --bg3: #1a1a22;
+  --bg4: #222230;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.13);
+  --text: #dddde8;
+  --text2: #8888a0;
+  --text3: #4a4a60;
+  --accent: #7c6dfa;
+  --accent-soft: rgba(124,109,250,0.15);
+
+  --c-orch:    #c8c8e0;
+  --c-guide:   #f0c96b;
+  --c-concept: #5ec4e8;
+  --c-viz:     #a594ff;
+  --c-code:    #5ee8a8;
+  --c-bp:      #f09b5e;
+  --c-mcp:     #d06bf0;
+  --c-deploy:  #5eaaf0;
+  --c-qa:      #a8f05e;
+  --c-scribe:  #f05e8a;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow: hidden; font-size: 14px; }
+
+/* ─── Shell ──────────────────────────────────── */
+#shell { display: grid; grid-template-columns: 220px 1fr 260px; grid-template-rows: 52px 1fr 68px; height: 100vh; min-height: 0; overflow: hidden; }
+#shell > * { min-height: 0; }
+
+/* ─── Topbar ─────────────────────────────────── */
+#topbar {
+  grid-column: 1/-1;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  z-index: 10;
+}
+.logo { font-family: 'Instrument Serif', serif; font-size: 17px; color: var(--text); }
+.logo em { color: var(--accent); font-style: italic; }
+
+#stage-track { display: flex; align-items: center; gap: 0; }
+.stage-pip {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 20px;
+  font-size: 11px; color: var(--text3);
+  cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.stage-pip:hover { color: var(--text2); }
+.stage-pip.active { background: var(--bg3); color: var(--text); }
+.stage-pip.done { color: var(--text2); }
+.stage-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.5; }
+.stage-pip.active .stage-dot { opacity: 1; background: var(--accent); }
+.stage-pip.done .stage-dot { opacity: 0.6; }
+
+#topbar-right { display: flex; gap: 8px; align-items: center; }
+.pill-btn {
+  padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border2);
+  background: transparent; color: var(--text2); font-family: 'DM Sans', sans-serif;
+  font-size: 12px; cursor: pointer; transition: all 0.15s;
+}
+.pill-btn:hover { background: var(--bg3); color: var(--text); }
+.pill-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.pill-btn.primary:hover { opacity: 0.85; }
+
+/* ─── Left sidebar ───────────────────────────── */
+#sidebar {
+  border-right: 1px solid var(--border);
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+#sidebar-head { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
+#sidebar-head h3 { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); }
+
+#agent-list { flex: 1; overflow-y: auto; padding: 8px; -webkit-overflow-scrolling: touch; }
+#agent-list::-webkit-scrollbar { display: none; }
+
+.agent-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 8px;
+  cursor: pointer; transition: background 0.15s;
+  margin-bottom: 2px;
+}
+.agent-row:hover { background: var(--bg3); }
+.agent-row.active { background: var(--bg3); }
+.agent-row.firing { background: var(--bg4); animation: pulse-row 0.8s ease-in-out infinite alternate; }
+@keyframes pulse-row { from { background: var(--bg3); } to { background: var(--bg4); } }
+
+.agent-icon {
+  width: 28px; height: 28px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.agent-info { min-width: 0; }
+.agent-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.agent-desc { font-size: 11px; color: var(--text3); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.agent-row.firing .agent-name { color: #fff; }
+
+.agent-status-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--bg4); margin-left: auto; flex-shrink: 0;
+  transition: background 0.3s;
+}
+.agent-row.firing .agent-status-dot { background: #fff; animation: blink-dot 0.6s infinite; }
+@keyframes blink-dot { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+#sidebar-prompts { padding: 10px 8px; border-top: 1px solid var(--border); }
+#sidebar-prompts h4 { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); padding: 0 8px 8px; font-weight: 500; }
+.prompt-chip {
+  display: block; width: 100%; text-align: left;
+  padding: 7px 10px; border-radius: 7px; margin-bottom: 3px;
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text2); font-size: 12px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.prompt-chip:hover { background: var(--bg3); border-color: var(--border2); color: var(--text); }
+
+/* ─── Main chat ──────────────────────────────── */
+#main { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--bg2); overflow: hidden; }
+
+#trace-bar {
+  height: 36px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 16px; gap: 6px;
+  background: var(--bg); overflow-x: auto; flex-shrink: 0;
+}
+#trace-bar::-webkit-scrollbar { display: none; }
+.trace-empty { font-size: 11px; color: var(--text3); }
+.trace-node {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; white-space: nowrap;
+}
+.trace-tag {
+  padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.trace-arrow { color: var(--text3); font-size: 10px; }
+.trace-reason { font-size: 11px; color: var(--text3); font-style: italic; }
+
+#chat { flex: 1; min-height: 0; overflow-y: auto; padding: 20px 20px 8px; display: flex; flex-direction: column; gap: 16px; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+#chat::-webkit-scrollbar { width: 3px; }
+#chat::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
+
+.msg-user {
+  align-self: flex-end; max-width: 65%;
+  background: var(--bg4); border: 1px solid var(--border2);
+  border-radius: 16px 16px 4px 16px; padding: 10px 14px;
+  font-size: 14px; line-height: 1.55;
+}
+
+.msg-agent { align-self: flex-start; max-width: 100%; width: 100%; }
+.msg-agent-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.msg-agent-tag {
+  padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 500;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.msg-agent-time { font-size: 11px; color: var(--text3); }
+.msg-agent-bubble {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 4px 16px 16px 16px; padding: 14px 16px;
+  font-size: 14px; line-height: 1.65; color: var(--text);
+}
+.msg-agent-bubble p { margin-bottom: 10px; }
+.msg-agent-bubble p:last-child { margin-bottom: 0; }
+.msg-agent-bubble strong { color: #fff; font-weight: 500; }
+.msg-agent-bubble em { color: var(--text2); font-style: italic; }
+
+.msg-agent-bubble pre {
+  background: var(--bg); border: 1px solid var(--border2);
+  border-radius: 8px; padding: 12px 14px; margin: 10px 0;
+  font-family: 'DM Mono', monospace; font-size: 12px; line-height: 1.6;
+  overflow-x: auto; color: #c8c8e0; white-space: pre-wrap;
+}
+.msg-agent-bubble code {
+  font-family: 'DM Mono', monospace; font-size: 12px;
+  background: var(--bg4); padding: 1px 5px; border-radius: 4px; color: var(--accent);
+}
+.msg-agent-bubble ul, .msg-agent-bubble ol { padding-left: 18px; margin: 8px 0; }
+.msg-agent-bubble li { margin-bottom: 4px; line-height: 1.55; }
+.msg-agent-bubble h4 { font-size: 13px; font-weight: 500; color: #fff; margin: 12px 0 6px; }
+
+.thinking-msg { align-self: flex-start; }
+.thinking-dots { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: var(--bg3); border-radius: 4px 16px 16px 16px; border: 1px solid var(--border); }
+.thinking-label { font-size: 12px; color: var(--text3); }
+.dot-pulse span { display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: var(--text3); margin: 0 1px; animation: dotpulse 1.2s infinite; }
+.dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
+.dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dotpulse { 0%,80%,100%{opacity:0.2;transform:scale(0.8)} 40%{opacity:1;transform:scale(1)} }
+
+/* Viz panel inside bubble */
+.viz-frame {
+  margin: 12px 0; background: var(--bg); border: 1px solid var(--border2);
+  border-radius: 8px; overflow: hidden;
+}
+.viz-frame svg { display: block; width: 100%; }
+.viz-fallback { font-size: 12px; color: var(--text2); }
+
+/* Scribe doc */
+.scribe-doc {
+  background: var(--bg); border: 1px solid var(--border2); border-radius: 8px;
+  padding: 16px; margin: 10px 0; font-family: 'DM Mono', monospace; font-size: 12px;
+  line-height: 1.7; color: var(--text2); white-space: pre-wrap; overflow-x: auto;
+}
+
+/* ─── Right panel ────────────────────────────── */
+#rightpanel {
+  border-left: 1px solid var(--border);
+  background: var(--bg);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+#rp-head { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
+#rp-head h3 { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); }
+#rp-body { flex: 1; overflow-y: auto; padding: 12px; -webkit-overflow-scrolling: touch; }
+#rp-body::-webkit-scrollbar { display: none; }
+
+.rp-section { margin-bottom: 20px; }
+.rp-section h4 { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+
+.arch-diagram { width: 100%; }
+
+.flow-card {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 12px; margin-bottom: 6px;
+  display: flex; align-items: flex-start; gap: 8px;
+}
+.flow-num { font-size: 10px; font-weight: 500; color: var(--text3); min-width: 14px; margin-top: 1px; }
+.flow-text { font-size: 12px; color: var(--text2); line-height: 1.5; }
+.flow-text strong { color: var(--text); font-weight: 500; }
+
+.stat-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.stat-row:last-child { border-bottom: none; }
+.stat-label { font-size: 12px; color: var(--text2); }
+.stat-value { font-size: 12px; font-weight: 500; color: var(--text); font-family: 'DM Mono', monospace; }
+
+/* ─── Input bar ──────────────────────────────── */
+#inputbar {
+  grid-column: 1/-1; border-top: 1px solid var(--border);
+  background: var(--bg); padding: 12px 20px;
+  display: flex; gap: 10px; align-items: flex-end;
+}
+#user-input {
+  flex: 1; background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 12px; padding: 10px 14px;
+  color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px;
+  resize: none; min-height: 44px; max-height: 120px; line-height: 1.5;
+  transition: border-color 0.15s;
+}
+#user-input:focus { outline: none; border-color: var(--accent); }
+#user-input::placeholder { color: var(--text3); }
+#send-btn {
+  padding: 10px 18px; border-radius: 12px;
+  background: var(--accent); border: none; color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: opacity 0.15s; white-space: nowrap;
+}
+#send-btn:hover { opacity: 0.85; }
+#send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+#input-hint { font-size: 11px; color: var(--text3); padding-top: 4px; }
+
+.tag-orch    { color: var(--c-orch);    border-color: rgba(200,200,224,0.2);    background: rgba(200,200,224,0.08); }
+.tag-guide   { color: var(--c-guide);   border-color: rgba(240,201,107,0.2);   background: rgba(240,201,107,0.08); }
+.tag-concept { color: var(--c-concept); border-color: rgba(94,196,232,0.2);    background: rgba(94,196,232,0.08); }
+.tag-viz     { color: var(--c-viz);     border-color: rgba(165,148,255,0.2);   background: rgba(165,148,255,0.08); }
+.tag-code    { color: var(--c-code);    border-color: rgba(94,232,168,0.2);    background: rgba(94,232,168,0.08); }
+.tag-bp      { color: var(--c-bp);      border-color: rgba(240,155,94,0.2);    background: rgba(240,155,94,0.08); }
+.tag-mcp     { color: var(--c-mcp);     border-color: rgba(208,107,240,0.2);   background: rgba(208,107,240,0.08); }
+.tag-deploy  { color: var(--c-deploy);  border-color: rgba(94,170,240,0.2);    background: rgba(94,170,240,0.08); }
+.tag-qa      { color: var(--c-qa);      border-color: rgba(168,240,94,0.2);    background: rgba(168,240,94,0.08); }
+.tag-scribe  { color: var(--c-scribe);  border-color: rgba(240,94,138,0.2);    background: rgba(240,94,138,0.08); }
+</style>
+</head>
+<body>
+<div id="shell">
+
+  <!-- TOPBAR -->
+  <header id="topbar">
+    <div class="logo">Agent <em>101</em> — Live Demo</div>
+    <div id="stage-track">
+      <div class="stage-pip active" data-stage="0" onclick="setStage(0)"><span class="stage-dot"></span>Intro</div>
+      <div class="stage-pip" data-stage="1" onclick="setStage(1)"><span class="stage-dot"></span>Concepts</div>
+      <div class="stage-pip" data-stage="2" onclick="setStage(2)"><span class="stage-dot"></span>Code</div>
+      <div class="stage-pip" data-stage="3" onclick="setStage(3)"><span class="stage-dot"></span>Best Practices</div>
+      <div class="stage-pip" data-stage="4" onclick="setStage(4)"><span class="stage-dot"></span>MCP</div>
+      <div class="stage-pip" data-stage="5" onclick="setStage(5)"><span class="stage-dot"></span>Deploy</div>
+      <div class="stage-pip" data-stage="6" onclick="setStage(6)"><span class="stage-dot"></span>Q&A</div>
+      <div class="stage-pip" data-stage="7" onclick="setStage(7)"><span class="stage-dot"></span>Wrap-up</div>
+    </div>
+    <div id="topbar-right">
+      <button class="pill-btn" onclick="clearChat()">Clear</button>
+      <button class="pill-btn primary" onclick="generateScribe()">Generate Cheat Sheet ↗</button>
+    </div>
+  </header>
+
+  <!-- LEFT SIDEBAR -->
+  <aside id="sidebar">
+    <div id="sidebar-head"><h3>Agents</h3></div>
+    <div id="agent-list">
+      <div class="agent-row" id="row-orch">
+        <div class="agent-icon" style="background:rgba(200,200,224,0.08);color:var(--c-orch)">⬡</div>
+        <div class="agent-info">
+          <div class="agent-name">Orchestrator</div>
+          <div class="agent-desc">Routes every message</div>
+        </div>
+        <div class="agent-status-dot"></div>
+      </div>
+      <div class="agent-row" id="row-guide">
+        <div class="agent-icon" style="background:rgba(240,201,107,0.08);color:var(--c-guide)">◈</div>
+        <div class="agent-info">
+          <div class="agent-name">Guide</div>
+          <div class="agent-desc">Narrative & transitions</div>
+        </div>
+        <div class="agent-status-dot"></div>
+      </div>
+      <div class="agent-row" id="row-concept">
+        <div class="agent-icon" style="background:rgba(94,196,232,0.08);color:var(--c-concept)">◎</div>
+        <div class="agent-info">
+          <div class="agent-name">Concept</div>
+          <div class="agent-desc">Explanations & theory</div>
+        </div>
+        <div class="agent-status-dot"></div>
+      </div>
+      <div class="agent-row" id="row-viz">
+        <div class="agent-icon" style="background:rgba(165,148,255,0.08);color:var(--c-viz)">◇</div>
+        <div class="agent-info">
+          <div class="agent-name">Viz</div>
+          <div class="agent-desc">Diagrams & visuals</div>
+        </div>
+        <div class="agent-status-dot"></div>
+      </div>
+      <div class="agent-row" id="row-code">
+        <div class="agent-icon" style="background:rgba(94,232,168,0.08);color:var(--c-code)">&lt;/&gt;</div>
+        <div class="agent-info">
+          <div class="agent-name">Code</div>
+          <div class="agent-desc">Patterns & examples</div>
+        </div>
+        <div class="agent-status-dot"></div>
+      </div>
+      <div class="agent-row" id="row-bp">
+        <div class="agent-icon" style="background:rgba(240,155,94,0.08);color:var(--c-bp)">⚑</div>
+        <div class="agent-info">
+          <div class="agent-name">Best Practices</div>
+          <div class="agent-desc">Dos, don'ts, gotchas</div>
+        </div>
+        <div class="agent-status-dot"></div>
+      </div>
+      <div class="agent-row" id="row-mcp">
+        <div class="agent-icon" style="background:rgba(208,107,240,0.08);color:var(--c-mcp)">⬡</div>
+        <div class="agent-info">
+          <div class="agent-name">MCP</div>
+          <div class="agent-desc">Model Context Protocol</div>
+        </div>
+        <div class="agent-status-dot"></div>
+      </div>
+      <div class="agent-row" id="row-deploy">
+        <div class="agent-icon" style="background:rgba(94,170,240,0.08);color:var(--c-deploy)">↑</div>
+        <div class="agent-info">
+          <div class="agent-name">Deploy</div>
+          <div class="agent-desc">Hosting & production</div>
+        </div>
+        <div class="agent-status-dot"></div>
+      </div>
+      <div class="agent-row" id="row-qa">
+        <div class="agent-icon" style="background:rgba(168,240,94,0.08);color:var(--c-qa)">?</div>
+        <div class="agent-info">
+          <div class="agent-name">Q&A</div>
+          <div class="agent-desc">Live audience questions</div>
+        </div>
+        <div class="agent-status-dot"></div>
+      </div>
+      <div class="agent-row" id="row-scribe">
+        <div class="agent-icon" style="background:rgba(240,94,138,0.08);color:var(--c-scribe)">✦</div>
+        <div class="agent-info">
+          <div class="agent-name">Scribe</div>
+          <div class="agent-desc">Cheat sheet & docs</div>
+        </div>
+        <div class="agent-status-dot"></div>
+      </div>
+    </div>
+    <div id="sidebar-prompts">
+      <h4>Quick prompts</h4>
+      <button class="prompt-chip" onclick="sendPrompt('What is an AI agent and how does it differ from a regular LLM call?')">What is an AI agent?</button>
+      <button class="prompt-chip" onclick="sendPrompt('Show me how to code an orchestrator agent in Python')">Code an orchestrator</button>
+      <button class="prompt-chip" onclick="sendPrompt('What are the top best practices when building agents?')">Best practices</button>
+      <button class="prompt-chip" onclick="sendPrompt('Explain MCP and why it matters for agents')">Explain MCP</button>
+      <button class="prompt-chip" onclick="sendPrompt('How do I deploy an agent to production?')">Deploy to production</button>
+      <button class="prompt-chip" onclick="sendPrompt('What is the difference between tool calling and function calling?')">Tool vs function calling</button>
+    </div>
+  </aside>
+
+  <!-- MAIN CHAT -->
+  <main id="main">
+    <div id="trace-bar"><span class="trace-empty">Agent trace will appear here as you chat</span></div>
+    <div id="chat">
+      <div class="msg-agent">
+        <div class="msg-agent-header">
+          <span class="msg-agent-tag tag-guide">Guide</span>
+          <span class="msg-agent-time">now</span>
+        </div>
+        <div class="msg-agent-bubble">
+          <p>Welcome to <strong>Agent 101</strong> — a live demo built entirely from a multi-agent system.</p>
+          <p>Every response you see comes from a team of specialist agents coordinated by an Orchestrator. Watch the <strong>trace bar above</strong> and the <strong>agent panel on the left</strong> to see routing decisions happen in real time.</p>
+          <p>Ask anything: <em>what is an agent, show me code, explain MCP, how do I deploy</em> — or use the quick prompts on the left. At the end, hit <strong>Generate Cheat Sheet</strong> to get a summary doc of everything we covered.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- RIGHT PANEL -->
+  <aside id="rightpanel">
+    <div id="rp-head"><h3>Session Info</h3></div>
+    <div id="rp-body">
+      <div class="rp-section">
+        <h4>Architecture</h4>
+        <svg class="arch-diagram" viewBox="0 0 220 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Orchestrator -->
+          <rect x="60" y="10" width="100" height="32" rx="8" fill="rgba(200,200,224,0.1)" stroke="rgba(200,200,224,0.25)" stroke-width="1"/>
+          <text x="110" y="31" text-anchor="middle" fill="#c8c8e0" font-size="11" font-family="DM Sans">Orchestrator</text>
+          <!-- Lines down -->
+          <line x1="110" y1="42" x2="110" y2="58" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+          <line x1="110" y1="58" x2="30" y2="58" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+          <line x1="110" y1="58" x2="190" y2="58" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+          <!-- Left branch down -->
+          <line x1="30" y1="58" x2="30" y2="290" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+          <!-- Right branch down -->
+          <line x1="190" y1="58" x2="190" y2="290" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+
+          <!-- Guide -->
+          <line x1="30" y1="78" x2="55" y2="78" stroke="rgba(240,201,107,0.3)" stroke-width="1"/>
+          <rect x="55" y="66" width="80" height="24" rx="6" fill="rgba(240,201,107,0.07)" stroke="rgba(240,201,107,0.2)" stroke-width="1"/>
+          <text x="95" y="82" text-anchor="middle" fill="#f0c96b" font-size="10" font-family="DM Sans">Guide</text>
+
+          <!-- Concept -->
+          <line x1="30" y1="116" x2="55" y2="116" stroke="rgba(94,196,232,0.3)" stroke-width="1"/>
+          <rect x="55" y="104" width="80" height="24" rx="6" fill="rgba(94,196,232,0.07)" stroke="rgba(94,196,232,0.2)" stroke-width="1"/>
+          <text x="95" y="120" text-anchor="middle" fill="#5ec4e8" font-size="10" font-family="DM Sans">Concept</text>
+
+          <!-- Viz -->
+          <line x1="190" y1="116" x2="165" y2="116" stroke="rgba(165,148,255,0.3)" stroke-width="1"/>
+          <rect x="85" y="104" width="80" height="24" rx="6" fill="rgba(165,148,255,0.07)" stroke="rgba(165,148,255,0.2)" stroke-width="1"/>
+          <text x="165" y="120" text-anchor="middle" fill="#a594ff" font-size="10" font-family="DM Sans">Viz</text>
+
+          <!-- Code -->
+          <line x1="30" y1="154" x2="55" y2="154" stroke="rgba(94,232,168,0.3)" stroke-width="1"/>
+          <rect x="55" y="142" width="80" height="24" rx="6" fill="rgba(94,232,168,0.07)" stroke="rgba(94,232,168,0.2)" stroke-width="1"/>
+          <text x="95" y="158" text-anchor="middle" fill="#5ee8a8" font-size="10" font-family="DM Sans">Code</text>
+
+          <!-- Best Practices -->
+          <line x1="190" y1="154" x2="165" y2="154" stroke="rgba(240,155,94,0.3)" stroke-width="1"/>
+          <rect x="85" y="142" width="80" height="24" rx="6" fill="rgba(240,155,94,0.07)" stroke="rgba(240,155,94,0.2)" stroke-width="1"/>
+          <text x="165" y="158" text-anchor="middle" fill="#f09b5e" font-size="10" font-family="DM Sans">Best Practices</text>
+
+          <!-- MCP -->
+          <line x1="30" y1="192" x2="55" y2="192" stroke="rgba(208,107,240,0.3)" stroke-width="1"/>
+          <rect x="55" y="180" width="80" height="24" rx="6" fill="rgba(208,107,240,0.07)" stroke="rgba(208,107,240,0.2)" stroke-width="1"/>
+          <text x="95" y="196" text-anchor="middle" fill="#d06bf0" font-size="10" font-family="DM Sans">MCP</text>
+
+          <!-- Deploy -->
+          <line x1="190" y1="192" x2="165" y2="192" stroke="rgba(94,170,240,0.3)" stroke-width="1"/>
+          <rect x="85" y="180" width="80" height="24" rx="6" fill="rgba(94,170,240,0.07)" stroke="rgba(94,170,240,0.2)" stroke-width="1"/>
+          <text x="165" y="196" text-anchor="middle" fill="#5eaaf0" font-size="10" font-family="DM Sans">Deploy</text>
+
+          <!-- Q&A -->
+          <line x1="30" y1="230" x2="55" y2="230" stroke="rgba(168,240,94,0.3)" stroke-width="1"/>
+          <rect x="55" y="218" width="80" height="24" rx="6" fill="rgba(168,240,94,0.07)" stroke="rgba(168,240,94,0.2)" stroke-width="1"/>
+          <text x="95" y="234" text-anchor="middle" fill="#a8f05e" font-size="10" font-family="DM Sans">Q&amp;A</text>
+
+          <!-- Scribe -->
+          <line x1="190" y1="268" x2="165" y2="268" stroke="rgba(240,94,138,0.3)" stroke-width="1"/>
+          <line x1="30" y1="268" x2="55" y2="268" stroke="rgba(240,94,138,0.3)" stroke-width="1"/>
+          <rect x="70" y="256" width="80" height="24" rx="6" fill="rgba(240,94,138,0.07)" stroke="rgba(240,94,138,0.2)" stroke-width="1"/>
+          <text x="110" y="272" text-anchor="middle" fill="#f05e8a" font-size="10" font-family="DM Sans">Scribe</text>
+        </svg>
+      </div>
+
+      <div class="rp-section">
+        <h4>Session Stats</h4>
+        <div class="stat-row"><span class="stat-label">Messages</span><span class="stat-value" id="stat-msgs">0</span></div>
+        <div class="stat-row"><span class="stat-label">Agents fired</span><span class="stat-value" id="stat-agents">0</span></div>
+        <div class="stat-row"><span class="stat-label">Topics covered</span><span class="stat-value" id="stat-topics">0</span></div>
+        <div class="stat-row"><span class="stat-label">Stage</span><span class="stat-value" id="stat-stage">Intro</span></div>
+      </div>
+
+      <div class="rp-section">
+        <h4>How it works</h4>
+        <div class="flow-card"><span class="flow-num">1</span><span class="flow-text">Your message hits the <strong>Orchestrator</strong></span></div>
+        <div class="flow-card"><span class="flow-num">2</span><span class="flow-text">It classifies intent and picks specialist agents</span></div>
+        <div class="flow-card"><span class="flow-num">3</span><span class="flow-text">Agents run — <strong>Concept</strong> explains first, then <strong>Viz</strong> turns that into a supporting diagram</span></div>
+        <div class="flow-card"><span class="flow-num">4</span><span class="flow-text"><strong>Scribe</strong> reads full history to build cheat sheet</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- INPUT BAR -->
+  <div id="inputbar">
+    <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+      <textarea id="user-input" placeholder="Ask anything about AI agents — or type an audience question…" rows="1"></textarea>
+      <div id="input-hint">↵ to send · Shift+↵ new line</div>
+    </div>
+    <button id="send-btn" onclick="handleSend()">Send ↗</button>
+  </div>
+
+</div>
+
+<script>
+const AZURE_OPENAI_API_KEY = 'PASTE_YOUR_AZURE_OPENAI_API_KEY';
+const AZURE_OPENAI_ENDPOINT = 'https://your-resource.openai.azure.com';
+const AZURE_OPENAI_DEPLOYMENT = 'gpt-4o';
+const AZURE_OPENAI_API_VERSION = '2024-10-21';
+
+let sessionHistory = [];
+let msgCount = 0;
+let agentsFired = 0;
+let topicsCovered = new Set();
+let currentStage = 0;
+
+const STAGES = ['Intro','Concepts','Code','Best Practices','MCP','Deploy','Q&A','Wrap-up'];
+
+const AGENTS = {
+  guide:   { label: 'Guide',         tag: 'tag-guide',   row: 'row-guide' },
+  concept: { label: 'Concept',       tag: 'tag-concept', row: 'row-concept' },
+  viz:     { label: 'Viz',           tag: 'tag-viz',     row: 'row-viz' },
+  code:    { label: 'Code',          tag: 'tag-code',    row: 'row-code' },
+  bp:      { label: 'Best Practices',tag: 'tag-bp',      row: 'row-bp' },
+  mcp:     { label: 'MCP',           tag: 'tag-mcp',     row: 'row-mcp' },
+  deploy:  { label: 'Deploy',        tag: 'tag-deploy',  row: 'row-deploy' },
+  qa:      { label: 'Q&A',           tag: 'tag-qa',      row: 'row-qa' },
+  scribe:  { label: 'Scribe',        tag: 'tag-scribe',  row: 'row-scribe' },
+};
+
+const THINKING_STATUS = {
+  orch: [
+    'Routing your request',
+    'Choosing the right specialists',
+    'Drafting the response plan',
+    'Preparing the final handoff',
+  ],
+  guide: [
+    'Shaping the narrative',
+    'Choosing a clean transition',
+    'Keeping the explanation presenter-friendly',
+  ],
+  concept: [
+    'Framing a plain-language definition',
+    'Picking a useful analogy',
+    'Turning the concept into a clear explanation',
+  ],
+  viz: [
+    'Pulling out the key concept',
+    'Sketching a supporting visual',
+    'Aligning the diagram with the explanation',
+  ],
+  code: [
+    'Selecting the implementation pattern',
+    'Turning the idea into runnable code',
+    'Highlighting what matters in the example',
+  ],
+  bp: [
+    'Separating strong habits from common pitfalls',
+    'Choosing the highest-signal tradeoffs',
+    'Condensing the production lessons',
+  ],
+  mcp: [
+    'Mapping the protocol pieces',
+    'Connecting the explanation to real tooling',
+    'Distilling the interoperability story',
+  ],
+  deploy: [
+    'Lining up the production concerns',
+    'Balancing reliability, cost, and scale',
+    'Turning deployment tradeoffs into guidance',
+  ],
+  qa: [
+    'Forming a concise answer',
+    'Checking the edge cases',
+    'Tightening the audience-ready response',
+  ],
+  scribe: [
+    'Reviewing the session history',
+    'Pulling out the key takeaways',
+    'Formatting the cheat sheet',
+  ],
+  default: [
+    'Working through the response',
+    'Organizing the output',
+    'Preparing the final answer',
+  ],
+};
+
+const thinkingTimers = new Map();
+
+const ORCH_SYSTEM = `You are the Orchestrator agent in a live demo of a multi-agent AI system for an "Agent 101" presentation.
+
+Your ONLY job is to output a JSON routing decision. Analyze the user message and decide which specialist agents to fire.
+
+Available agents:
+- "guide": for demo narrative, transitions, "what's next", stage questions
+- "concept": for explaining what agents are, how they work, theory, definitions — ALWAYS pair with "viz"
+- "viz": generates an SVG diagram to accompany concept explanations — always fired alongside "concept"
+- "code": for code examples, implementation patterns, how to build something
+- "bp": best practices, anti-patterns, gotchas, dos and don'ts
+- "mcp": Model Context Protocol explanations, MCP architecture, tool connections
+- "deploy": hosting, production, monitoring, scaling, cost, deployment patterns
+- "qa": live audience questions, off-script queries, anything that doesn't fit a category
+- "scribe": ONLY when explicitly asked to generate a summary, cheat sheet, or document
+
+Rules:
+- concept and viz ALWAYS fire together
+- You can fire multiple agents (e.g. ["concept","viz","code"])
+- "scribe" only fires if user explicitly asks for cheat sheet or summary
+- Default to "qa" if unclear
+
+Output ONLY valid JSON:
+{
+  "agents": ["agent1","agent2"],
+  "reason": "one sentence explanation visible to audience",
+  "topic": "short topic label for stats e.g. 'tool calling'"
+}`;
+
+const AGENT_SYSTEMS = {
+  guide: `You are the Guide agent in an Agent 101 live demo. Your role is narrative flow and transitions.
+Keep responses warm, concise, presenter-friendly. Use clear signposting like "Let's move to...", "We've just covered...", "Coming up next...". 
+Max 3 short paragraphs. No code. Plain language for a mixed technical/non-technical audience.`,
+
+  concept: `You are the Concept agent in an Agent 101 live demo. You explain AI agent concepts clearly.
+Audience: beginners to intermediate developers. 
+- Use plain language first, then precise terms
+- Give a real-world analogy for every concept
+- Structure: definition → how it works → why it matters
+- Max 250 words
+- No code (the Code agent handles that)
+- Bold key terms`,
+
+  viz: `You are the Viz agent. Generate a clean SVG diagram that visually supports the Concept agent's explanation.
+The conversation will include the original user question and may include an assistant message that starts with:
+"Visualization brief:"
+Use that brief as the primary source for the diagram, especially its title, diagram style, and key points.
+Output ONLY a raw SVG element — no explanation, no markdown, no prose. Just the SVG.
+Requirements:
+- viewBox="0 0 480 220"
+- Dark theme: background rect fill="#0c0c0f"
+- Use these colors for nodes: agents=#7c6dfa, data=#5ec4e8, user=#f0c96b, system=#5ee8a8, external=#d06bf0
+- Node boxes: rx=8, stroke-width=1, fill=rgba(color,0.12), stroke=rgba(color,0.4)
+- Text: fill=#dddde8, font-size=11, font-family="DM Sans,sans-serif"
+- Arrows: stroke=rgba(255,255,255,0.2), marker-end for direction
+- Keep it simple: max 6-7 nodes, clear left-to-right or top-to-bottom flow
+- Make the visual explain the concept itself, not the multi-agent system, unless the concept is explicitly about orchestration or routing
+- Prefer visual structures like stages, loops, components, inputs/outputs, or before/after states based on the concept explanation
+- If the brief suggests sequence, cycle, comparison, layers, or hierarchy, reflect that structure directly in the SVG
+- Add a subtle title in top-left: font-size=10, fill=rgba(255,255,255,0.3)`,
+
+  code: `You are the Code agent in an Agent 101 live demo. Show implementation patterns in a way that is fast to teach from.
+Language: Python (preferred), but pseudocode is allowed when the user asks for high-level logic.
+Format every response as:
+1. One-line description of the pattern
+2. Either:
+   - a short pseudocode block, or
+   - a minimal real code block that is easy to explain live
+3. A short final explanation in 2-3 bullets
+Rules:
+- Default to minimal real code unless the user asks for pseudocode, architecture logic, or a language-agnostic answer
+- Keep real code under 50 lines
+- Show the pattern, not a full app
+- Use realistic variable names
+- Always import only what you use
+- Inline comments only for non-obvious lines
+- End with a concise explanation of what the audience should notice`,
+
+  bp: `You are the Best Practices agent in an Agent 101 live demo.
+Format every response as:
+✓ DO: [practice] — [why in one sentence]
+✗ DON'T: [anti-pattern] — [why it fails]
+
+Cover 3-4 pairs per response. Be specific and opinionated. Real gotchas from production experience.
+End with one "golden rule" in bold.`,
+
+  mcp: `You are the MCP agent — expert on Model Context Protocol.
+Explain MCP for an Agent 101 audience who may have just heard of it.
+Structure: What it is → the client/server model → why it beats custom integrations → real examples.
+Keep to 200 words max. Mention: stdio vs SSE transports, tool discovery, the ecosystem.
+Use an analogy (MCP is like USB-C for AI tools works well).`,
+
+  deploy: `You are the Deploy agent in an Agent 101 live demo. Cover production deployment of agents.
+Topics to touch on based on the question: hosting options, API wrapping, observability/tracing, 
+cost management, rate limiting, error handling, retries, human-in-the-loop checkpoints.
+Be practical — give specific tool/platform names (LangSmith, Fly.io, Railway, AWS Lambda etc).
+Max 200 words. Use a short checklist format where appropriate.`,
+
+  qa: `You are the Q&A agent. You handle live audience questions during an Agent 101 demo.
+Answer directly and confidently. If it's a genuinely hard question, say so honestly.
+If the question is covered by another topic area, briefly answer AND note "we'll go deeper on this when we cover [X]".
+Keep answers tight — max 150 words. The audience wants a quick, smart answer, not a lecture.`,
+
+  scribe: `You are the Scribe agent. Generate a clean cheat sheet summarizing the Agent 101 session.
+Format as a structured markdown document:
+# Agent 101 — Cheat Sheet
+## Key Concepts
+## Code Patterns  
+## Best Practices (✓/✗ format)
+## MCP Quick Reference
+## Deployment Checklist
+## Key Takeaways
+
+Pull from the actual conversation history provided. Be comprehensive but scannable.
+Use bullet points, code snippets where helpful. This is what attendees take home.`,
+};
+
+async function callAzureOpenAI(system, messages) {
+  if (!AZURE_OPENAI_API_KEY || AZURE_OPENAI_API_KEY.includes('PASTE_')) {
+    throw new Error('Set AZURE_OPENAI_API_KEY at the top of this file.');
+  }
+
+  if (!AZURE_OPENAI_ENDPOINT || AZURE_OPENAI_ENDPOINT.includes('your-resource')) {
+    throw new Error('Set AZURE_OPENAI_ENDPOINT at the top of this file.');
+  }
+
+  if (!AZURE_OPENAI_DEPLOYMENT) {
+    throw new Error('Set AZURE_OPENAI_DEPLOYMENT at the top of this file.');
+  }
+
+  const endpoint = AZURE_OPENAI_ENDPOINT.replace(/\/+$/, '');
+  const url = `${endpoint}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=${encodeURIComponent(AZURE_OPENAI_API_VERSION)}`;
+
+  const request = async (tokenField) => {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'api-key': AZURE_OPENAI_API_KEY
+      },
+      body: JSON.stringify({
+        [tokenField]: 1000,
+        messages: [
+          { role: 'system', content: system },
+          ...messages
+        ]
+      })
+    });
+    const data = await res.json();
+    return { res, data };
+  };
+
+  let { res, data } = await request('max_completion_tokens');
+  if ((!res.ok || data.error) && data.error?.message?.includes('max_completion_tokens')) {
+    ({ res, data } = await request('max_tokens'));
+  }
+
+  if (!res.ok || data.error) {
+    throw new Error(data.error?.message || `Azure OpenAI request failed (${res.status})`);
+  }
+
+  return data.choices?.[0]?.message?.content || '';
+}
+
+async function orchestrate(userMsg) {
+  const messages = [{ role: 'user', content: userMsg }];
+  const raw = await callAzureOpenAI(ORCH_SYSTEM, messages);
+  try {
+    const clean = raw.replace(/```json|```/g,'').trim();
+    return JSON.parse(clean);
+  } catch(e) {
+    return { agents: ['qa'], reason: 'Handling as open question', topic: 'general' };
+  }
+}
+
+function normalizeAgents(agents) {
+  const normalized = [];
+  for (const agent of (agents && agents.length ? agents : ['qa'])) {
+    if (!normalized.includes(agent)) normalized.push(agent);
+  }
+
+  if (normalized.includes('concept') && !normalized.includes('viz')) {
+    normalized.splice(normalized.indexOf('concept') + 1, 0, 'viz');
+  } else if (normalized.includes('viz') && !normalized.includes('concept')) {
+    normalized.splice(normalized.indexOf('viz'), 0, 'concept');
+  }
+
+  return normalized.length ? normalized : ['qa'];
+}
+
+function plainText(text) {
+  return text.replace(/[*`#_>-]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function normalizeConceptLine(line) {
+  return plainText(line.replace(/^\s*\d+[\).\s:-]*/, '').replace(/^\s*[-•]\s*/, ''));
+}
+
+function conceptSentences(text, limit = 4) {
+  const lineCandidates = text
+    .split('\n')
+    .map(normalizeConceptLine)
+    .filter(line => line.length >= 6);
+  if (lineCandidates.length) return lineCandidates.slice(0, limit);
+
+  const plain = normalizeConceptLine(text);
+  const parts = plain.split(/(?<=[.!?])\s+/).map(part => part.trim()).filter(part => part.length >= 6);
+  return parts.length ? parts.slice(0, limit) : (plain ? [plain] : []);
+}
+
+function pickVizStyle(text) {
+  const lower = plainText(text).toLowerCase();
+  if (['loop', 'cycle', 'iterate', 'iteration', 'feedback', 'retry'].some(term => lower.includes(term))) return 'cycle';
+  if (['compare', 'comparison', 'versus', 'vs ', 'trade-off', 'tradeoff', 'difference'].some(term => lower.includes(term))) return 'comparison';
+  if (['layer', 'stack', 'tier', 'foundation'].some(term => lower.includes(term))) return 'layers';
+  if (['hierarchy', 'tree', 'parent', 'child', 'top-down'].some(term => lower.includes(term))) return 'hierarchy';
+  return 'sequence';
+}
+
+function buildVizHistory(agentHistory, conceptText) {
+  if (!conceptText || !conceptText.trim() || conceptText.startsWith('Error:')) return agentHistory;
+  const sentences = conceptSentences(conceptText);
+  const title = (sentences[0] || conceptText).slice(0, 72);
+  const style = pickVizStyle(conceptText);
+  const bulletPoints = (sentences.slice(0, 4).map(sentence => `- ${sentence}`).join('\n')) || '- Explain the core concept clearly';
+  return [
+    { role: 'user', content: agentHistory[agentHistory.length - 1]?.content || 'Explain this concept visually.' },
+    { role: 'assistant', content: `Visualization brief:\nTitle: ${title}\nDiagram style: ${style}\nKey points to visualize:\n${bulletPoints}` }
+  ];
+}
+
+function setTrace(orchDecision, activeAgents) {
+  const bar = document.getElementById('trace-bar');
+  bar.innerHTML = '';
+
+  const orchNode = document.createElement('div');
+  orchNode.className = 'trace-node';
+  orchNode.innerHTML = `<span class="trace-tag tag-orch">Orchestrator</span>`;
+  bar.appendChild(orchNode);
+
+  const arr1 = document.createElement('span');
+  arr1.className = 'trace-arrow'; arr1.textContent = '→';
+  bar.appendChild(arr1);
+
+  activeAgents.forEach((a, i) => {
+    const cfg = AGENTS[a];
+    if (!cfg) return;
+    const node = document.createElement('div');
+    node.className = 'trace-node';
+    node.innerHTML = `<span class="trace-tag ${cfg.tag}">${cfg.label}</span>`;
+    bar.appendChild(node);
+    if (i < activeAgents.length - 1) {
+      const sep = document.createElement('span');
+      sep.className = 'trace-arrow'; sep.textContent = '+';
+      bar.appendChild(sep);
+    }
+  });
+
+  if (orchDecision.reason) {
+    const reason = document.createElement('span');
+    reason.className = 'trace-reason';
+    reason.textContent = ` — ${orchDecision.reason}`;
+    bar.appendChild(reason);
+  }
+}
+
+function fireRow(agentKey, on) {
+  const row = document.getElementById(`row-${agentKey}`);
+  if (!row) return;
+  if (on) row.classList.add('firing');
+  else row.classList.remove('firing');
+}
+
+function addThinking(agentKey) {
+  const cfg = AGENTS[agentKey] || { label: agentKey, tag: 'tag-orch' };
+  const statuses = THINKING_STATUS[agentKey] || THINKING_STATUS.default;
+  const chat = document.getElementById('chat');
+  const el = document.createElement('div');
+  el.className = 'msg-agent thinking-msg';
+  el.id = `thinking-${agentKey}-${Date.now()}`;
+  el.innerHTML = `
+    <div class="msg-agent-header">
+      <span class="msg-agent-tag ${cfg.tag}">${cfg.label}</span>
+    </div>
+    <div class="thinking-dots">
+      <span class="dot-pulse"><span></span><span></span><span></span></span>
+      <span class="thinking-label">${statuses[0]}</span>
+    </div>`;
+  chat.appendChild(el);
+  chat.scrollTop = chat.scrollHeight;
+
+  if (statuses.length > 1) {
+    let idx = 0;
+    const timer = window.setInterval(() => {
+      const label = el.querySelector('.thinking-label');
+      if (!label) return;
+      idx = (idx + 1) % statuses.length;
+      label.textContent = statuses[idx];
+    }, 1100);
+    thinkingTimers.set(el.id, timer);
+  }
+
+  return el.id;
+}
+
+function removeThinking(id) {
+  const timer = thinkingTimers.get(id);
+  if (timer) {
+    window.clearInterval(timer);
+    thinkingTimers.delete(id);
+  }
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+function formatContent(text) {
+  // Convert markdown-ish to HTML
+  let html = text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/```[\w]*\n?([\s\S]*?)```/g, (_, code) => `<pre>${code.trim()}</pre>`)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^#{1,4}\s+(.+)$/gm, '<h4>$1</h4>')
+    .replace(/^[-•]\s+(.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`)
+    .replace(/\n{2,}/g, '</p><p>')
+    .replace(/\n/g, '<br>');
+  if (!html.startsWith('<')) html = `<p>${html}</p>`;
+  return html;
+}
+
+function extractSvg(content) {
+  if (!content) return '';
+  const attempts = [content, content.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')];
+  for (const attempt of attempts) {
+    const match = attempt.match(/<svg[\s\S]*<\/svg>/i);
+    if (match) return match[0];
+  }
+  return '';
+}
+
+function addMessage(agentKey, content, isViz = false) {
+  const cfg = AGENTS[agentKey] || { label: agentKey, tag: 'tag-orch' };
+  const chat = document.getElementById('chat');
+  const el = document.createElement('div');
+  el.className = 'msg-agent';
+
+  const now = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+
+  if (isViz) {
+    const svg = extractSvg(content);
+    el.innerHTML = `
+      <div class="msg-agent-header">
+        <span class="msg-agent-tag ${cfg.tag}">${cfg.label}</span>
+        <span class="msg-agent-time">${now}</span>
+      </div>
+      <div class="msg-agent-bubble">
+        ${svg ? `<div class="viz-frame">${svg}</div>` : '<div class="viz-fallback">Viz agent returned no inline SVG for this turn.</div>'}
+      </div>`;
+  } else if (agentKey === 'scribe') {
+    el.innerHTML = `
+      <div class="msg-agent-header">
+        <span class="msg-agent-tag ${cfg.tag}">${cfg.label}</span>
+        <span class="msg-agent-time">${now}</span>
+      </div>
+      <div class="msg-agent-bubble">
+        <div class="scribe-doc">${content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      </div>`;
+  } else {
+    el.innerHTML = `
+      <div class="msg-agent-header">
+        <span class="msg-agent-tag ${cfg.tag}">${cfg.label}</span>
+        <span class="msg-agent-time">${now}</span>
+      </div>
+      <div class="msg-agent-bubble">${formatContent(content)}</div>`;
+  }
+
+  chat.appendChild(el);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function addUserMsg(text) {
+  const chat = document.getElementById('chat');
+  const el = document.createElement('div');
+  el.className = 'msg-user';
+  el.textContent = text;
+  chat.appendChild(el);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function updateStats(agents, topic) {
+  msgCount++;
+  agentsFired += agents.length;
+  if (topic) topicsCovered.add(topic);
+  document.getElementById('stat-msgs').textContent = msgCount;
+  document.getElementById('stat-agents').textContent = agentsFired;
+  document.getElementById('stat-topics').textContent = topicsCovered.size;
+}
+
+function setStage(n) {
+  currentStage = n;
+  document.querySelectorAll('.stage-pip').forEach((el, i) => {
+    el.classList.remove('active','done');
+    if (i === n) el.classList.add('active');
+    else if (i < n) el.classList.add('done');
+  });
+  document.getElementById('stat-stage').textContent = STAGES[n];
+}
+
+function clearChat() {
+  for (const timer of thinkingTimers.values()) {
+    window.clearInterval(timer);
+  }
+  thinkingTimers.clear();
+  const chat = document.getElementById('chat');
+  chat.innerHTML = '';
+  sessionHistory = [];
+  msgCount = 0; agentsFired = 0; topicsCovered.clear();
+  document.getElementById('stat-msgs').textContent = '0';
+  document.getElementById('stat-agents').textContent = '0';
+  document.getElementById('stat-topics').textContent = '0';
+  document.getElementById('trace-bar').innerHTML = '<span class="trace-empty">Agent trace will appear here as you chat</span>';
+}
+
+async function generateScribe() {
+  const btn = document.querySelector('.pill-btn.primary');
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+
+  const thinkId = addThinking('scribe');
+  fireRow('orch', true); fireRow('scribe', true);
+
+  const historyText = sessionHistory.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n\n');
+  const prompt = `Here is the full conversation from the Agent 101 demo session:\n\n${historyText || 'No conversation yet — generate a general Agent 101 cheat sheet.'}\n\nGenerate the cheat sheet now.`;
+
+  try {
+    const result = await callAzureOpenAI(AGENT_SYSTEMS.scribe, [{ role: 'user', content: prompt }]);
+    removeThinking(thinkId);
+    addMessage('scribe', result, false);
+  } catch(e) {
+    removeThinking(thinkId);
+    addMessage('qa', `Error generating cheat sheet: ${e.message}`, false);
+  }
+
+  fireRow('orch', false); fireRow('scribe', false);
+  btn.disabled = false; btn.textContent = 'Generate Cheat Sheet ↗';
+}
+
+async function handleSend() {
+  const input = document.getElementById('user-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = ''; input.style.height = 'auto';
+  document.getElementById('send-btn').disabled = true;
+
+  addUserMsg(text);
+  sessionHistory.push({ role: 'user', content: text });
+
+  // Fire orchestrator
+  fireRow('orch', true);
+  let orchResult;
+  try {
+    orchResult = await orchestrate(text);
+  } catch(e) {
+    orchResult = { agents: ['qa'], reason: 'Fallback routing', topic: 'general' };
+  }
+  fireRow('orch', false);
+
+  const agentsToFire = normalizeAgents(orchResult.agents || ['qa']);
+  orchResult.agents = agentsToFire;
+  setTrace(orchResult, agentsToFire);
+  updateStats(agentsToFire, orchResult.topic);
+
+  // Build conversation context for agents
+  const agentHistory = sessionHistory.slice(-6).map(m => ({ role: m.role, content: m.content }));
+
+  // Fire agents - concept first so viz can support it, then others
+  const hasViz = agentsToFire.includes('viz');
+  const hasConcept = agentsToFire.includes('concept');
+  const others = agentsToFire.filter(a => a !== 'viz' && a !== 'concept');
+
+  let allResults = [];
+
+  let conceptText = '';
+  if (hasConcept) {
+    fireRow('concept', true);
+    const thinkId = addThinking('concept');
+    try {
+      conceptText = await callAzureOpenAI(AGENT_SYSTEMS.concept, agentHistory);
+      removeThinking(thinkId);
+      fireRow('concept', false);
+      addMessage('concept', conceptText);
+      allResults.push(conceptText);
+    } catch(e) {
+      conceptText = `Error: ${e.message}`;
+      removeThinking(thinkId);
+      fireRow('concept', false);
+      addMessage('concept', conceptText);
+      allResults.push(conceptText);
+    }
+  }
+
+  if (hasViz) {
+    fireRow('viz', true);
+    const thinkId = addThinking('viz');
+    try {
+      const vizText = await callAzureOpenAI(AGENT_SYSTEMS.viz, buildVizHistory(agentHistory, conceptText));
+      removeThinking(thinkId);
+      fireRow('viz', false);
+      addMessage('viz', vizText, true);
+    } catch(e) {
+      removeThinking(thinkId);
+      fireRow('viz', false);
+      addMessage('viz', '', true);
+    }
+  }
+
+  // Sequential: others
+  for (const agentKey of others) {
+    if (!AGENT_SYSTEMS[agentKey]) continue;
+    fireRow(agentKey, true);
+    const thinkId = addThinking(agentKey);
+    try {
+      const result = await callAzureOpenAI(AGENT_SYSTEMS[agentKey], agentHistory);
+      removeThinking(thinkId);
+      addMessage(agentKey, result);
+      allResults.push(result);
+    } catch(e) {
+      removeThinking(thinkId);
+      addMessage('qa', `${agentKey} error: ${e.message}`);
+    }
+    fireRow(agentKey, false);
+  }
+
+  // Add combined response to history
+  if (allResults.length > 0) {
+    sessionHistory.push({ role: 'assistant', content: allResults.join('\n\n') });
+  }
+
+  document.getElementById('send-btn').disabled = false;
+}
+
+function sendPrompt(text) {
+  document.getElementById('user-input').value = text;
+  handleSend();
+}
+
+// Auto-resize textarea
+document.getElementById('user-input').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+
+document.getElementById('user-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    handleSend();
+  }
+});
+</script>
+</body>
+</html>
