@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Agent 101 — Live Demo</title>
+<title>Agent 101 — Learning Studio</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -24,14 +24,12 @@
   --font-body: "Montserrat", "DM Sans", system-ui, sans-serif;
   --font-mono: "DM Mono", monospace;
   --c-orch:    #ffffff;
-  --c-guide:   #a2f3f3;
   --c-concept: #1df4f4;
   --c-viz:     #a2f3f3;
   --c-code:    #1df4f4;
   --c-bp:      #ffffff;
   --c-mcp:     #a2f3f3;
   --c-deploy:  #1df4f4;
-  --c-qa:      #a2f3f3;
   --c-scribe:  #ffffff;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -54,24 +52,37 @@ html, body {
 #topbar { grid-column: 1/-1; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 1px solid var(--border); background: rgba(3,17,20,0.84); backdrop-filter: blur(14px); z-index: 10; }
 .logo { font-family: var(--font-display); font-size: 19px; letter-spacing: 0.03em; }
 .logo em { color: var(--accent); font-style: italic; }
-#stage-track { display: flex; align-items: center; }
-.stage-pip { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 11px; color: var(--text3); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
-.stage-pip:hover { color: var(--text2); }
-.stage-pip.active { background: var(--bg3); color: var(--text); }
-.stage-pip.done { color: var(--text2); }
-.stage-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.5; }
-.stage-pip.active .stage-dot { opacity: 1; background: var(--accent); }
 #topbar-right { display: flex; gap: 8px; }
 .pill-btn { padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border2); background: transparent; color: var(--text2); font-family: var(--font-body); font-size: 12px; cursor: pointer; transition: all 0.15s; }
 .pill-btn:hover { background: var(--accent-soft); color: var(--text); }
 .pill-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
 .pill-btn.primary:hover { opacity: 0.85; }
 .pill-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.help-wrap { position: relative; display: flex; align-items: center; }
+.help-btn {
+  width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border2);
+  background: transparent; color: var(--text2); font-family: var(--font-display); font-size: 14px;
+  cursor: help; transition: all 0.15s;
+}
+.help-btn:hover, .help-btn:focus-visible { background: var(--accent-soft); color: var(--text); outline: none; }
+.help-tooltip {
+  position: absolute; top: calc(100% + 10px); right: 0; width: 264px; padding: 12px 14px;
+  border-radius: 12px; border: 1px solid var(--border2); background: rgba(3,17,20,0.96);
+  color: var(--text2); font-size: 12px; line-height: 1.55; box-shadow: 0 10px 30px rgba(0,0,0,0.28);
+  opacity: 0; pointer-events: none; transform: translateY(-4px); transition: opacity 0.16s, transform 0.16s;
+}
+.help-tooltip strong { color: var(--text); font-weight: 600; }
+.help-wrap:hover .help-tooltip,
+.help-wrap:focus-within .help-tooltip {
+  opacity: 1; pointer-events: auto; transform: translateY(0);
+}
 
 /* Sidebar */
 #sidebar { border-right: 1px solid var(--border); background: rgba(3,17,20,0.78); backdrop-filter: blur(12px); display: flex; flex-direction: column; overflow: hidden; }
 #sidebar-head { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
 #sidebar-head h3 { font-size: 10px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text3); font-family: var(--font-display); }
+.sidebar-note { margin-top: 6px; font-size: 11px; line-height: 1.45; color: var(--text3); }
+.sidebar-note strong { color: var(--text2); font-weight: 600; }
 #agent-list { flex: 1; overflow-y: auto; padding: 8px; -webkit-overflow-scrolling: touch; }
 #agent-list::-webkit-scrollbar { display: none; }
 .agent-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer; transition: background 0.15s; margin-bottom: 2px; }
@@ -122,7 +133,7 @@ html, body {
 
 .viz-frame { margin: 4px 0; background: rgba(3,17,20,0.88); border: 1px solid var(--border2); border-radius: 8px; overflow: hidden; }
 .viz-frame svg { display: block; width: 100%; }
-.viz-frame text { font-size: 9px; }
+.viz-frame text { font-size: 8px; }
 .viz-fallback { font-size: 12px; color: var(--text2); }
 .scribe-doc { background: rgba(3,17,20,0.88); border: 1px solid var(--border2); border-radius: 8px; padding: 16px; font-family: var(--font-mono); font-size: 12px; line-height: 1.7; color: var(--text2); white-space: pre-wrap; overflow-x: auto; margin: 4px 0; }
 
@@ -163,14 +174,12 @@ html, body {
 
 /* Agent tag colours */
 .tag-orch    { color: var(--c-orch);    border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); }
-.tag-guide   { color: var(--c-guide);   border-color: rgba(162,243,243,0.24); background: rgba(162,243,243,0.08); }
 .tag-concept { color: var(--c-concept); border-color: rgba(29,244,244,0.24);  background: rgba(29,244,244,0.08); }
 .tag-viz     { color: var(--c-viz);     border-color: rgba(162,243,243,0.24); background: rgba(162,243,243,0.08); }
 .tag-code    { color: var(--c-code);    border-color: rgba(29,244,244,0.24);  background: rgba(29,244,244,0.08); }
 .tag-bp      { color: var(--c-bp);      border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); }
 .tag-mcp     { color: var(--c-mcp);     border-color: rgba(162,243,243,0.24); background: rgba(162,243,243,0.08); }
 .tag-deploy  { color: var(--c-deploy);  border-color: rgba(29,244,244,0.24);  background: rgba(29,244,244,0.08); }
-.tag-qa      { color: var(--c-qa);      border-color: rgba(162,243,243,0.24); background: rgba(162,243,243,0.08); }
 .tag-scribe  { color: var(--c-scribe);  border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); }
 </style>
 </head>
@@ -178,18 +187,18 @@ html, body {
 <div id="shell">
 
   <header id="topbar">
-    <div class="logo">Agent <em>101</em> — Live Demo</div>
-    <div id="stage-track">
-      <div class="stage-pip active" onclick="setStage(0)"><span class="stage-dot"></span>Intro</div>
-      <div class="stage-pip" onclick="setStage(1)"><span class="stage-dot"></span>Concepts</div>
-      <div class="stage-pip" onclick="setStage(2)"><span class="stage-dot"></span>Code</div>
-      <div class="stage-pip" onclick="setStage(3)"><span class="stage-dot"></span>Best Practices</div>
-      <div class="stage-pip" onclick="setStage(4)"><span class="stage-dot"></span>MCP</div>
-      <div class="stage-pip" onclick="setStage(5)"><span class="stage-dot"></span>Deploy</div>
-      <div class="stage-pip" onclick="setStage(6)"><span class="stage-dot"></span>Q&amp;A</div>
-      <div class="stage-pip" onclick="setStage(7)"><span class="stage-dot"></span>Wrap-up</div>
-    </div>
+    <div class="logo">Agent <em>101</em> — Learning Studio</div>
     <div id="topbar-right">
+      <div class="help-wrap">
+        <button class="help-btn" aria-label="How to use Agent 101">?</button>
+        <div class="help-tooltip">
+          <strong>How to use</strong><br>
+          Ask a question in the chat or click a quick prompt.<br>
+          Watch the trace bar and Orchestrator notes to see how routing happens.<br>
+          Click agent names on the left to force specific agents for one turn.<br>
+          Use Generate Cheat Sheet any time to export a summary of what you explored.
+        </div>
+      </div>
       <button class="pill-btn" onclick="clearSession()">Clear</button>
       <button class="pill-btn" id="download-scribe-btn" onclick="downloadScribe()" disabled>Download Cheat Sheet PDF</button>
       <button class="pill-btn primary" id="scribe-btn" onclick="generateScribe()">Generate Cheat Sheet ↗</button>
@@ -197,79 +206,62 @@ html, body {
   </header>
 
   <aside id="sidebar">
-    <div id="sidebar-head"><h3>Agents</h3></div>
+    <div id="sidebar-head">
+      <h3>Manual Override</h3>
+      <div class="sidebar-note" id="sidebar-note-live">Click agents to force the <strong>next turn</strong>. Otherwise the Orchestrator routes automatically.</div>
+    </div>
     <div id="agent-list">
-      <div class="agent-row" id="row-orch">
-        <div class="agent-icon" style="background:rgba(255,255,255,0.06);color:var(--c-orch)">⬡</div>
-        <div class="agent-info"><div class="agent-name">Orchestrator</div><div class="agent-desc">Routes every message</div></div>
-        <div class="agent-status-dot"></div>
-      </div>
-      <div class="agent-row" id="row-guide">
-        <div class="agent-icon" style="background:rgba(162,243,243,0.08);color:var(--c-guide)">◈</div>
-        <div class="agent-info"><div class="agent-name">Guide</div><div class="agent-desc">Narrative &amp; transitions</div></div>
-        <div class="agent-status-dot"></div>
-      </div>
       <div class="agent-row" id="row-concept">
         <div class="agent-icon" style="background:rgba(29,244,244,0.08);color:var(--c-concept)">◎</div>
-        <div class="agent-info"><div class="agent-name">Concept</div><div class="agent-desc">Explanations &amp; theory</div></div>
+        <div class="agent-info"><div class="agent-name">Concept</div><div class="agent-desc">Foundations, architecture, theory</div></div>
         <div class="agent-status-dot"></div>
       </div>
       <div class="agent-row" id="row-viz">
         <div class="agent-icon" style="background:rgba(162,243,243,0.08);color:var(--c-viz)">◇</div>
-        <div class="agent-info"><div class="agent-name">Viz</div><div class="agent-desc">Diagrams &amp; visuals</div></div>
+        <div class="agent-info"><div class="agent-name">Visual</div><div class="agent-desc">Workflow and architecture diagrams</div></div>
         <div class="agent-status-dot"></div>
       </div>
       <div class="agent-row" id="row-code">
         <div class="agent-icon" style="background:rgba(29,244,244,0.08);color:var(--c-code);font-size:11px">&lt;/&gt;</div>
-        <div class="agent-info"><div class="agent-name">Code</div><div class="agent-desc">Patterns &amp; examples</div></div>
+        <div class="agent-info"><div class="agent-name">Code</div><div class="agent-desc">Implementation patterns and examples</div></div>
         <div class="agent-status-dot"></div>
       </div>
       <div class="agent-row" id="row-bp">
         <div class="agent-icon" style="background:rgba(255,255,255,0.06);color:var(--c-bp)">⚑</div>
-        <div class="agent-info"><div class="agent-name">Best Practices</div><div class="agent-desc">Dos, don'ts, gotchas</div></div>
+        <div class="agent-info"><div class="agent-name">Best Practices</div><div class="agent-desc">Dos, don’ts, pitfalls</div></div>
         <div class="agent-status-dot"></div>
       </div>
       <div class="agent-row" id="row-mcp">
         <div class="agent-icon" style="background:rgba(162,243,243,0.08);color:var(--c-mcp)">⬡</div>
-        <div class="agent-info"><div class="agent-name">MCP</div><div class="agent-desc">Model Context Protocol</div></div>
+        <div class="agent-info"><div class="agent-name">MCP</div><div class="agent-desc">Tools, connectors, protocol design</div></div>
         <div class="agent-status-dot"></div>
       </div>
       <div class="agent-row" id="row-deploy">
         <div class="agent-icon" style="background:rgba(29,244,244,0.08);color:var(--c-deploy)">↑</div>
-        <div class="agent-info"><div class="agent-name">Deploy</div><div class="agent-desc">Hosting &amp; production</div></div>
-        <div class="agent-status-dot"></div>
-      </div>
-      <div class="agent-row" id="row-qa">
-        <div class="agent-icon" style="background:rgba(162,243,243,0.08);color:var(--c-qa);font-weight:500">?</div>
-        <div class="agent-info"><div class="agent-name">Q&amp;A</div><div class="agent-desc">Live audience questions</div></div>
-        <div class="agent-status-dot"></div>
-      </div>
-      <div class="agent-row" id="row-scribe">
-        <div class="agent-icon" style="background:rgba(255,255,255,0.06);color:var(--c-scribe)">✦</div>
-        <div class="agent-info"><div class="agent-name">Scribe</div><div class="agent-desc">Cheat sheet &amp; docs</div></div>
+        <div class="agent-info"><div class="agent-name">Deploy</div><div class="agent-desc">Production, reliability, operations</div></div>
         <div class="agent-status-dot"></div>
       </div>
     </div>
     <div id="sidebar-prompts">
       <h4>Quick prompts</h4>
       <button class="prompt-chip" onclick="quickSend('What is an AI agent and how does it differ from a regular LLM call?')">What is an AI agent?</button>
-      <button class="prompt-chip" onclick="quickSend('Show me how to code an orchestrator agent in Python')">Code an orchestrator</button>
+      <button class="prompt-chip" onclick="quickSend('Show me how to code an orchestrator agent in Python')">Build an orchestrator</button>
       <button class="prompt-chip" onclick="quickSend('What are the top best practices when building agents?')">Best practices</button>
       <button class="prompt-chip" onclick="quickSend('Explain MCP and why it matters for agents')">Explain MCP</button>
-      <button class="prompt-chip" onclick="quickSend('How do I deploy an agent to production?')">Deploy to production</button>
+      <button class="prompt-chip" onclick="quickSend('How do I deploy an agent to production?')">Production deployment</button>
       <button class="prompt-chip" onclick="quickSend('What is the difference between tool calling and function calling?')">Tool vs function calling</button>
     </div>
   </aside>
 
   <main id="main">
-    <div id="trace-bar"><span class="trace-empty">Agent trace will appear here as you chat</span></div>
+    <div id="trace-bar"><span class="trace-empty">Live route will appear here after each message</span></div>
     <div id="chat">
       <div class="msg-agent">
-        <div class="msg-agent-header"><span class="msg-agent-tag tag-guide">Guide</span><span class="msg-agent-time">now</span></div>
+        <div class="msg-agent-header"><span class="msg-agent-tag tag-orch">Agent 101</span><span class="msg-agent-time">now</span></div>
         <div class="msg-agent-bubble">
-          <p>Welcome to <strong>Agent 101</strong> — a live demo powered by a Python multi-agent backend.</p>
-          <p>Every response comes from specialist agents coordinated by an Orchestrator. Watch the <strong>trace bar</strong> and the <strong>agent panel</strong> to see routing decisions happen in real time.</p>
-          <p>Ask anything, or use the quick prompts on the left. Hit <strong>Generate Cheat Sheet</strong> at the end to get a summary of everything we covered.</p>
+          <p>Welcome to <strong>Agent 101</strong> — a self-guided learning tool for AI agents and agentic workflows.</p>
+          <p>Ask questions, inspect routing decisions, and dive into code, diagrams, best practices, MCP, or deployment from one place.</p>
+          <p>Use manual override on the left when you want a specific specialist, or let the Orchestrator choose for you.</p>
         </div>
       </div>
     </div>
@@ -280,50 +272,42 @@ html, body {
     <div id="rp-body">
       <div class="rp-section">
         <h4>Architecture</h4>
-        <svg viewBox="0 0 220 330" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%">
+        <svg viewBox="0 0 220 290" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%">
           <rect x="60" y="8" width="100" height="30" rx="7" fill="rgba(200,200,224,0.1)" stroke="rgba(200,200,224,0.25)" stroke-width="1"/>
           <text x="110" y="27" text-anchor="middle" fill="#ffffff" font-size="11" font-family="Montserrat">Orchestrator</text>
           <line x1="110" y1="38" x2="110" y2="54" stroke="rgba(162,243,243,0.18)" stroke-width="1"/>
           <line x1="30" y1="54" x2="190" y2="54" stroke="rgba(162,243,243,0.14)" stroke-width="1"/>
-          <line x1="30" y1="54" x2="30" y2="300" stroke="rgba(162,243,243,0.08)" stroke-width="1"/>
-          <line x1="190" y1="54" x2="190" y2="300" stroke="rgba(162,243,243,0.08)" stroke-width="1"/>
-          <!-- Guide -->
-          <line x1="30" y1="74" x2="55" y2="74" stroke="rgba(240,201,107,0.3)" stroke-width="1"/>
-          <rect x="55" y="62" width="110" height="24" rx="6" fill="rgba(240,201,107,0.07)" stroke="rgba(240,201,107,0.2)" stroke-width="1"/>
-          <text x="110" y="78" text-anchor="middle" fill="#a2f3f3" font-size="10" font-family="Montserrat">Guide</text>
+          <line x1="30" y1="54" x2="30" y2="264" stroke="rgba(162,243,243,0.08)" stroke-width="1"/>
+          <line x1="190" y1="54" x2="190" y2="264" stroke="rgba(162,243,243,0.08)" stroke-width="1"/>
           <!-- Concept -->
-          <line x1="30" y1="110" x2="55" y2="110" stroke="rgba(94,196,232,0.3)" stroke-width="1"/>
-          <rect x="55" y="98" width="50" height="24" rx="6" fill="rgba(94,196,232,0.07)" stroke="rgba(94,196,232,0.2)" stroke-width="1"/>
-          <text x="80" y="114" text-anchor="middle" fill="#1df4f4" font-size="10" font-family="Montserrat">Concept</text>
-          <!-- Viz -->
-          <line x1="190" y1="110" x2="165" y2="110" stroke="rgba(165,148,255,0.3)" stroke-width="1"/>
-          <rect x="115" y="98" width="50" height="24" rx="6" fill="rgba(165,148,255,0.07)" stroke="rgba(165,148,255,0.2)" stroke-width="1"/>
-          <text x="140" y="114" text-anchor="middle" fill="#a2f3f3" font-size="10" font-family="Montserrat">Viz</text>
-          <text x="110" y="95" text-anchor="middle" fill="rgba(162,243,243,0.46)" font-size="9" font-family="Montserrat">supports</text>
+          <line x1="30" y1="76" x2="55" y2="76" stroke="rgba(94,196,232,0.3)" stroke-width="1"/>
+          <rect x="55" y="64" width="50" height="24" rx="6" fill="rgba(94,196,232,0.07)" stroke="rgba(94,196,232,0.2)" stroke-width="1"/>
+          <text x="80" y="80" text-anchor="middle" fill="#1df4f4" font-size="10" font-family="Montserrat">Concept</text>
+          <!-- Visual -->
+          <line x1="190" y1="76" x2="165" y2="76" stroke="rgba(165,148,255,0.3)" stroke-width="1"/>
+          <rect x="108" y="64" width="64" height="24" rx="6" fill="rgba(165,148,255,0.07)" stroke="rgba(165,148,255,0.2)" stroke-width="1"/>
+          <text x="140" y="80" text-anchor="middle" fill="#a2f3f3" font-size="10" font-family="Montserrat">Visual</text>
+          <text x="110" y="61" text-anchor="middle" fill="rgba(162,243,243,0.46)" font-size="9" font-family="Montserrat">paired</text>
           <!-- Code -->
-          <line x1="30" y1="148" x2="55" y2="148" stroke="rgba(94,232,168,0.3)" stroke-width="1"/>
-          <rect x="55" y="136" width="110" height="24" rx="6" fill="rgba(94,232,168,0.07)" stroke="rgba(94,232,168,0.2)" stroke-width="1"/>
-          <text x="110" y="152" text-anchor="middle" fill="#1df4f4" font-size="10" font-family="Montserrat">Code</text>
+          <line x1="30" y1="112" x2="55" y2="112" stroke="rgba(94,232,168,0.3)" stroke-width="1"/>
+          <rect x="55" y="100" width="110" height="24" rx="6" fill="rgba(94,232,168,0.07)" stroke="rgba(94,232,168,0.2)" stroke-width="1"/>
+          <text x="110" y="116" text-anchor="middle" fill="#1df4f4" font-size="10" font-family="Montserrat">Code</text>
           <!-- Best Practices -->
-          <line x1="190" y1="186" x2="165" y2="186" stroke="rgba(240,155,94,0.3)" stroke-width="1"/>
-          <rect x="55" y="174" width="110" height="24" rx="6" fill="rgba(240,155,94,0.07)" stroke="rgba(240,155,94,0.2)" stroke-width="1"/>
-          <text x="110" y="190" text-anchor="middle" fill="#ffffff" font-size="10" font-family="Montserrat">Best Practices</text>
+          <line x1="190" y1="148" x2="165" y2="148" stroke="rgba(240,155,94,0.3)" stroke-width="1"/>
+          <rect x="55" y="136" width="110" height="24" rx="6" fill="rgba(240,155,94,0.07)" stroke="rgba(240,155,94,0.2)" stroke-width="1"/>
+          <text x="110" y="152" text-anchor="middle" fill="#ffffff" font-size="10" font-family="Montserrat">Best Practices</text>
           <!-- MCP -->
-          <line x1="30" y1="224" x2="55" y2="224" stroke="rgba(208,107,240,0.3)" stroke-width="1"/>
-          <rect x="55" y="212" width="110" height="24" rx="6" fill="rgba(208,107,240,0.07)" stroke="rgba(208,107,240,0.2)" stroke-width="1"/>
-          <text x="110" y="228" text-anchor="middle" fill="#a2f3f3" font-size="10" font-family="Montserrat">MCP</text>
+          <line x1="30" y1="184" x2="55" y2="184" stroke="rgba(208,107,240,0.3)" stroke-width="1"/>
+          <rect x="55" y="172" width="110" height="24" rx="6" fill="rgba(208,107,240,0.07)" stroke="rgba(208,107,240,0.2)" stroke-width="1"/>
+          <text x="110" y="188" text-anchor="middle" fill="#a2f3f3" font-size="10" font-family="Montserrat">MCP</text>
           <!-- Deploy -->
-          <line x1="190" y1="262" x2="165" y2="262" stroke="rgba(94,170,240,0.3)" stroke-width="1"/>
-          <rect x="55" y="250" width="110" height="24" rx="6" fill="rgba(94,170,240,0.07)" stroke="rgba(94,170,240,0.2)" stroke-width="1"/>
-          <text x="110" y="266" text-anchor="middle" fill="#1df4f4" font-size="10" font-family="Montserrat">Deploy</text>
-          <!-- Q&A -->
-          <line x1="30" y1="300" x2="55" y2="300" stroke="rgba(168,240,94,0.3)" stroke-width="1"/>
-          <rect x="55" y="288" width="46" height="24" rx="6" fill="rgba(168,240,94,0.07)" stroke="rgba(168,240,94,0.2)" stroke-width="1"/>
-          <text x="78" y="304" text-anchor="middle" fill="#a2f3f3" font-size="10" font-family="Montserrat">Q&amp;A</text>
+          <line x1="190" y1="220" x2="165" y2="220" stroke="rgba(94,170,240,0.3)" stroke-width="1"/>
+          <rect x="55" y="208" width="110" height="24" rx="6" fill="rgba(94,170,240,0.07)" stroke="rgba(94,170,240,0.2)" stroke-width="1"/>
+          <text x="110" y="224" text-anchor="middle" fill="#1df4f4" font-size="10" font-family="Montserrat">Deploy</text>
           <!-- Scribe -->
-          <line x1="190" y1="300" x2="165" y2="300" stroke="rgba(240,94,138,0.3)" stroke-width="1"/>
-          <rect x="119" y="288" width="46" height="24" rx="6" fill="rgba(240,94,138,0.07)" stroke="rgba(240,94,138,0.2)" stroke-width="1"/>
-          <text x="142" y="304" text-anchor="middle" fill="#ffffff" font-size="10" font-family="Montserrat">Scribe</text>
+          <line x1="30" y1="256" x2="55" y2="256" stroke="rgba(240,94,138,0.3)" stroke-width="1"/>
+          <rect x="55" y="244" width="110" height="24" rx="6" fill="rgba(240,94,138,0.07)" stroke="rgba(240,94,138,0.2)" stroke-width="1"/>
+          <text x="110" y="260" text-anchor="middle" fill="#ffffff" font-size="10" font-family="Montserrat">Scribe</text>
         </svg>
       </div>
       <div class="rp-section">
@@ -331,22 +315,21 @@ html, body {
         <div class="stat-row"><span class="stat-label">Messages</span><span class="stat-value" id="stat-msgs">0</span></div>
         <div class="stat-row"><span class="stat-label">Agents fired</span><span class="stat-value" id="stat-agents">0</span></div>
         <div class="stat-row"><span class="stat-label">Topics covered</span><span class="stat-value" id="stat-topics">0</span></div>
-        <div class="stat-row"><span class="stat-label">Stage</span><span class="stat-value" id="stat-stage">Intro</span></div>
       </div>
       <div class="rp-section">
         <h4>How it works</h4>
-        <div class="flow-card"><span class="flow-num">1</span><span class="flow-text">Message hits the <strong>Python backend</strong></span></div>
-        <div class="flow-card"><span class="flow-num">2</span><span class="flow-text"><strong>Orchestrator</strong> classifies intent and picks agents</span></div>
-        <div class="flow-card"><span class="flow-num">3</span><span class="flow-text">Agents run — <strong>Concept</strong> explains first, then <strong>Viz</strong> turns that into a supporting diagram</span></div>
-        <div class="flow-card"><span class="flow-num">4</span><span class="flow-text"><strong>Scribe</strong> synthesises session into a cheat sheet</span></div>
+        <div class="flow-card"><span class="flow-num">1</span><span class="flow-text">You ask about agents, workflows, tools, or deployment</span></div>
+        <div class="flow-card"><span class="flow-num">2</span><span class="flow-text"><strong>Orchestrator</strong> chooses the most relevant specialists</span></div>
+        <div class="flow-card"><span class="flow-num">3</span><span class="flow-text"><strong>Concept</strong> and <strong>Visual</strong> teach ideas, while <strong>Code</strong>, <strong>Best Practices</strong>, <strong>MCP</strong>, and <strong>Deploy</strong> add depth when needed</span></div>
+        <div class="flow-card"><span class="flow-num">4</span><span class="flow-text"><strong>Scribe</strong> can turn the session into a reusable cheat sheet</span></div>
       </div>
     </div>
   </aside>
 
   <div id="inputbar">
     <div style="flex:1;display:flex;flex-direction:column;gap:4px">
-      <textarea id="user-input" placeholder="Ask anything about AI agents — or type a live audience question…" rows="1"></textarea>
-      <div id="input-hint">↵ to send · Shift+↵ new line</div>
+      <textarea id="user-input" placeholder="Ask anything about AI agents, workflows, tools, or deployment…" rows="1"></textarea>
+      <div id="input-hint">Optional manual override on the left · ↵ to send · Shift+↵ new line</div>
     </div>
     <button id="send-btn" onclick="handleSend()">Send ↗</button>
   </div>
@@ -354,21 +337,17 @@ html, body {
 </div>
 
 <script>
-const STAGES = ['Intro','Concepts','Code','Best Practices','MCP','Deploy','Q&A','Wrap-up'];
-
 const AGENT_META = {
   orch:    { label: 'Orchestrator', tag: 'tag-orch' },
-  guide:   { label: 'Guide',        tag: 'tag-guide' },
   concept: { label: 'Concept',      tag: 'tag-concept' },
-  viz:     { label: 'Viz',          tag: 'tag-viz' },
+  viz:     { label: 'Visual',       tag: 'tag-viz' },
   code:    { label: 'Code',         tag: 'tag-code' },
   bp:      { label: 'Best Practices', tag: 'tag-bp' },
   mcp:     { label: 'MCP',          tag: 'tag-mcp' },
   deploy:  { label: 'Deploy',       tag: 'tag-deploy' },
-  qa:      { label: 'Q&A',          tag: 'tag-qa' },
   scribe:  { label: 'Scribe',       tag: 'tag-scribe' },
 };
-const SELECTABLE_AGENTS = ['guide', 'concept', 'viz', 'code', 'bp', 'mcp', 'deploy', 'qa'];
+const SELECTABLE_AGENTS = ['concept', 'viz', 'code', 'bp', 'mcp', 'deploy'];
 
 const THINKING_STATUS = {
   orch: [
@@ -376,11 +355,6 @@ const THINKING_STATUS = {
     'Choosing the right specialists',
     'Drafting the response plan',
     'Preparing the final handoff',
-  ],
-  guide: [
-    'Shaping the narrative',
-    'Choosing a clean transition',
-    'Keeping the explanation presenter-friendly',
   ],
   concept: [
     'Framing a plain-language definition',
@@ -412,11 +386,6 @@ const THINKING_STATUS = {
     'Balancing reliability, cost, and scale',
     'Turning deployment tradeoffs into guidance',
   ],
-  qa: [
-    'Forming a concise answer',
-    'Checking the edge cases',
-    'Tightening the audience-ready response',
-  ],
   scribe: [
     'Reviewing the session history',
     'Pulling out the key takeaways',
@@ -434,28 +403,25 @@ const thinkingTimers = new Map();
 let lastScribeContent = '';
 const selectedAgents = new Set();
 
-function setStage(n) {
-  const pips = document.querySelectorAll('.stage-pip');
-  pips.forEach((el, i) => {
-    el.classList.remove('active', 'done');
-    if (i === n) el.classList.add('active');
-    else if (i < n) el.classList.add('done');
-  });
-  document.getElementById('stat-stage').textContent = STAGES[n];
-}
-
 function syncSelectedAgentUI() {
   for (const agentKey of SELECTABLE_AGENTS) {
     const row = document.getElementById(`row-${agentKey}`);
     if (row) row.classList.toggle('selected', selectedAgents.has(agentKey));
   }
+  const sidebarNote = document.getElementById('sidebar-note-live');
   const hint = document.getElementById('input-hint');
   if (!hint) return;
   if (selectedAgents.size) {
     const labels = Array.from(selectedAgents).map(key => AGENT_META[key]?.label || key);
+    if (sidebarNote) {
+      sidebarNote.innerHTML = `Manual override active for the <strong>next turn</strong>: ${labels.join(', ')}.`;
+    }
     hint.textContent = `Selected agents: ${labels.join(', ')} · Send runs those agents directly · Shift+↵ new line`;
   } else {
-    hint.textContent = '↵ to send · Shift+↵ new line';
+    if (sidebarNote) {
+      sidebarNote.innerHTML = `Click agents to force the <strong>next turn</strong>. Otherwise the Orchestrator routes automatically.`;
+    }
+    hint.textContent = 'Optional manual override on the left · ↵ to send · Shift+↵ new line';
   }
 }
 
@@ -504,6 +470,26 @@ function setTrace(routing, agents) {
     reason.textContent = `  —  ${routing.reason}`;
     bar.appendChild(reason);
   }
+}
+
+function buildOrchestratorMessage(routing) {
+  const lines = ['**Routing notes**'];
+  if (routing.topic) lines.push(`- Topic: ${routing.topic}`);
+  if (routing.reason) lines.push(`- Decision: ${routing.reason}`);
+
+  const steps = Array.isArray(routing.decision_steps)
+    ? routing.decision_steps.filter(Boolean)
+    : [];
+
+  if (steps.length) {
+    steps.forEach((step, index) => {
+      lines.push(`- Step ${index + 1}: ${step}`);
+    });
+  } else if (routing.agents?.length) {
+    lines.push(`- Selected agents: ${routing.agents.join(', ')}`);
+  }
+
+  return lines.join('\n');
 }
 
 function updateStats(stats) {
@@ -818,7 +804,7 @@ function addAgentMsg(agentKey, content, isViz) {
     const svg = extractSvg(content);
     body = svg
       ? `<div class="viz-frame">${svg}</div>`
-      : '<div class="viz-fallback">Viz agent returned no inline SVG for this turn.</div>';
+      : '<div class="viz-fallback">Visual agent returned no inline SVG for this turn.</div>';
   } else if (agentKey === 'scribe') {
     const safe = content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     body = `<div class="scribe-doc">${safe}</div>`;
@@ -864,12 +850,13 @@ async function handleSend() {
 
     if (!routeRes.ok) throw new Error(`Routing error: ${routeRes.status}`);
     const routeData = await routeRes.json();
-    const routing = routeData.routing || { agents: ['qa'], reason: 'Routing fallback' };
+    const routing = routeData.routing || { agents: ['concept', 'viz'], reason: 'Routing fallback' };
 
     removeThinking(orchThink);
     fireRow('orch', false);
 
     setTrace(routing, routing.agents || []);
+    addAgentMsg('orch', buildOrchestratorMessage(routing), false);
     for (const agentKey of (routing.agents || [])) {
       fireRow(agentKey, true);
       thinkIds[agentKey] = addThinking(agentKey);
@@ -907,7 +894,7 @@ async function handleSend() {
     for (const agentKey of Object.keys(thinkIds)) {
       fireRow(agentKey, false);
     }
-    addAgentMsg('qa', `Error: ${err.message}. Is the Python server running?`, false);
+    addAgentMsg('concept', `Error: ${err.message}. Is the Python server running?`, false);
   }
 
   busy = false;
@@ -933,7 +920,7 @@ async function generateScribe() {
     updateStats(data.stats);
   } catch (err) {
     removeThinking(thinkId);
-    addAgentMsg('qa', `Scribe error: ${err.message}`, false);
+    addAgentMsg('concept', `Scribe error: ${err.message}`, false);
   }
 
   fireRow('scribe', false);
@@ -952,9 +939,8 @@ async function clearSession() {
   lastScribeContent = '';
   document.getElementById('download-scribe-btn').disabled = true;
   document.getElementById('chat').innerHTML = '';
-  document.getElementById('trace-bar').innerHTML = '<span class="trace-empty">Agent trace will appear here as you chat</span>';
+  document.getElementById('trace-bar').innerHTML = '<span class="trace-empty">Live route will appear here after each message</span>';
   ['stat-msgs','stat-agents','stat-topics'].forEach(id => document.getElementById(id).textContent = '0');
-  setStage(0);
 }
 
 function quickSend(text) {

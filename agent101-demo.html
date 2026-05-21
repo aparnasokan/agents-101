@@ -73,6 +73,24 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 .pill-btn:hover { background: var(--bg3); color: var(--text); }
 .pill-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .pill-btn.primary:hover { opacity: 0.85; }
+.help-wrap { position: relative; display: flex; align-items: center; }
+.help-btn {
+  width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border2);
+  background: transparent; color: var(--text2); font-family: 'DM Sans', sans-serif; font-size: 14px;
+  cursor: help; transition: all 0.15s;
+}
+.help-btn:hover, .help-btn:focus-visible { background: var(--bg3); color: var(--text); outline: none; }
+.help-tooltip {
+  position: absolute; top: calc(100% + 10px); right: 0; width: 264px; padding: 12px 14px;
+  border-radius: 12px; border: 1px solid var(--border2); background: rgba(12,12,15,0.96);
+  color: var(--text2); font-size: 12px; line-height: 1.55; box-shadow: 0 10px 30px rgba(0,0,0,0.28);
+  opacity: 0; pointer-events: none; transform: translateY(-4px); transition: opacity 0.16s, transform 0.16s;
+}
+.help-tooltip strong { color: var(--text); font-weight: 600; }
+.help-wrap:hover .help-tooltip,
+.help-wrap:focus-within .help-tooltip {
+  opacity: 1; pointer-events: auto; transform: translateY(0);
+}
 
 /* ─── Left sidebar ───────────────────────────── */
 #sidebar {
@@ -200,12 +218,13 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 .dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
 @keyframes dotpulse { 0%,80%,100%{opacity:0.2;transform:scale(0.8)} 40%{opacity:1;transform:scale(1)} }
 
-/* Viz panel inside bubble */
+/* Visual panel inside bubble */
 .viz-frame {
   margin: 12px 0; background: var(--bg); border: 1px solid var(--border2);
   border-radius: 8px; overflow: hidden;
 }
 .viz-frame svg { display: block; width: 100%; }
+.viz-frame text { font-size: 8px; }
 .viz-fallback { font-size: 12px; color: var(--text2); }
 
 /* Scribe doc */
@@ -299,6 +318,16 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
       <div class="stage-pip" data-stage="7" onclick="setStage(7)"><span class="stage-dot"></span>Wrap-up</div>
     </div>
     <div id="topbar-right">
+      <div class="help-wrap">
+        <button class="help-btn" aria-label="How to use this demo">?</button>
+        <div class="help-tooltip">
+          <strong>How to use</strong><br>
+          Ask a question in the chat or click a quick prompt.<br>
+          Watch the trace bar and Orchestrator notes to see how routing happens.<br>
+          Each specialist answers from its own role, and Visual turns concepts into diagrams.<br>
+          Use Generate Cheat Sheet at the end to capture the session.
+        </div>
+      </div>
       <button class="pill-btn" onclick="clearChat()">Clear</button>
       <button class="pill-btn primary" onclick="generateScribe()">Generate Cheat Sheet ↗</button>
     </div>
@@ -335,7 +364,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
       <div class="agent-row" id="row-viz">
         <div class="agent-icon" style="background:rgba(165,148,255,0.08);color:var(--c-viz)">◇</div>
         <div class="agent-info">
-          <div class="agent-name">Viz</div>
+          <div class="agent-name">Visual</div>
           <div class="agent-desc">Diagrams & visuals</div>
         </div>
         <div class="agent-status-dot"></div>
@@ -447,10 +476,10 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
           <rect x="55" y="104" width="80" height="24" rx="6" fill="rgba(94,196,232,0.07)" stroke="rgba(94,196,232,0.2)" stroke-width="1"/>
           <text x="95" y="120" text-anchor="middle" fill="#5ec4e8" font-size="10" font-family="DM Sans">Concept</text>
 
-          <!-- Viz -->
+          <!-- Visual -->
           <line x1="190" y1="116" x2="165" y2="116" stroke="rgba(165,148,255,0.3)" stroke-width="1"/>
-          <rect x="85" y="104" width="80" height="24" rx="6" fill="rgba(165,148,255,0.07)" stroke="rgba(165,148,255,0.2)" stroke-width="1"/>
-          <text x="165" y="120" text-anchor="middle" fill="#a594ff" font-size="10" font-family="DM Sans">Viz</text>
+          <rect x="76" y="104" width="89" height="24" rx="6" fill="rgba(165,148,255,0.07)" stroke="rgba(165,148,255,0.2)" stroke-width="1"/>
+          <text x="120" y="120" text-anchor="middle" fill="#a594ff" font-size="10" font-family="DM Sans">Visual</text>
 
           <!-- Code -->
           <line x1="30" y1="154" x2="55" y2="154" stroke="rgba(94,232,168,0.3)" stroke-width="1"/>
@@ -497,7 +526,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
         <h4>How it works</h4>
         <div class="flow-card"><span class="flow-num">1</span><span class="flow-text">Your message hits the <strong>Orchestrator</strong></span></div>
         <div class="flow-card"><span class="flow-num">2</span><span class="flow-text">It classifies intent and picks specialist agents</span></div>
-        <div class="flow-card"><span class="flow-num">3</span><span class="flow-text">Agents run — <strong>Concept</strong> explains first, then <strong>Viz</strong> turns that into a supporting diagram</span></div>
+        <div class="flow-card"><span class="flow-num">3</span><span class="flow-text">Agents run — <strong>Concept</strong> explains first, then <strong>Visual</strong> turns that into a supporting diagram</span></div>
         <div class="flow-card"><span class="flow-num">4</span><span class="flow-text"><strong>Scribe</strong> reads full history to build cheat sheet</span></div>
       </div>
     </div>
@@ -531,7 +560,7 @@ const STAGES = ['Intro','Concepts','Code','Best Practices','MCP','Deploy','Q&A',
 const AGENTS = {
   guide:   { label: 'Guide',         tag: 'tag-guide',   row: 'row-guide' },
   concept: { label: 'Concept',       tag: 'tag-concept', row: 'row-concept' },
-  viz:     { label: 'Viz',           tag: 'tag-viz',     row: 'row-viz' },
+  viz:     { label: 'Visual',        tag: 'tag-viz',     row: 'row-viz' },
   code:    { label: 'Code',          tag: 'tag-code',    row: 'row-code' },
   bp:      { label: 'Best Practices',tag: 'tag-bp',      row: 'row-bp' },
   mcp:     { label: 'MCP',           tag: 'tag-mcp',     row: 'row-mcp' },
@@ -608,7 +637,7 @@ Your ONLY job is to output a JSON routing decision. Analyze the user message and
 Available agents:
 - "guide": for demo narrative, transitions, "what's next", stage questions
 - "concept": for explaining what agents are, how they work, theory, definitions — ALWAYS pair with "viz"
-- "viz": generates an SVG diagram to accompany concept explanations — always fired alongside "concept"
+- "viz": the Visual agent that generates an SVG diagram to accompany concept explanations — always fired alongside "concept"
 - "code": for code examples, implementation patterns, how to build something
 - "bp": best practices, anti-patterns, gotchas, dos and don'ts
 - "mcp": Model Context Protocol explanations, MCP architecture, tool connections
@@ -626,7 +655,11 @@ Output ONLY valid JSON:
 {
   "agents": ["agent1","agent2"],
   "reason": "one sentence explanation visible to audience",
-  "topic": "short topic label for stats e.g. 'tool calling'"
+  "topic": "short topic label for stats e.g. 'tool calling'",
+  "decision_steps": [
+    "Short audience-visible routing note 1",
+    "Short audience-visible routing note 2"
+  ]
 }`;
 
 const AGENT_SYSTEMS = {
@@ -643,7 +676,7 @@ Audience: beginners to intermediate developers.
 - No code (the Code agent handles that)
 - Bold key terms`,
 
-  viz: `You are the Viz agent. Generate a clean SVG diagram that visually supports the Concept agent's explanation.
+  viz: `You are the Visual agent. Generate a clean SVG diagram that visually supports the Concept agent's explanation.
 The conversation will include the original user question and may include an assistant message that starts with:
 "Visualization brief:"
 Use that brief as the primary source for the diagram, especially its title, diagram style, and key points.
@@ -653,7 +686,7 @@ Requirements:
 - Dark theme: background rect fill="#0c0c0f"
 - Use these colors for nodes: agents=#7c6dfa, data=#5ec4e8, user=#f0c96b, system=#5ee8a8, external=#d06bf0
 - Node boxes: rx=8, stroke-width=1, fill=rgba(color,0.12), stroke=rgba(color,0.4)
-- Text: fill=#dddde8, font-size=11, font-family="DM Sans,sans-serif"
+- Text: fill=#dddde8, font-size=10, font-family="DM Sans,sans-serif"
 - Arrows: stroke=rgba(255,255,255,0.2), marker-end for direction
 - Keep it simple: max 6-7 nodes, clear left-to-right or top-to-bottom flow
 - Make the visual explain the concept itself, not the multi-agent system, unless the concept is explicitly about orchestration or routing
@@ -684,6 +717,8 @@ Format every response as:
 ✗ DON'T: [anti-pattern] — [why it fails]
 
 Cover 3-4 pairs per response. Be specific and opinionated. Real gotchas from production experience.
+Do not include code blocks, pseudocode, or inline code.
+Keep the response focused on practices, tradeoffs, and failure modes.
 End with one "golden rule" in bold.`,
 
   mcp: `You are the MCP agent — expert on Model Context Protocol.
@@ -924,7 +959,7 @@ function formatContent(text) {
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
     .replace(/^#{1,4}\s+(.+)$/gm, '<h4>$1</h4>')
-    .replace(/^[-•]\s+(.+)$/gm, '<li>$1</li>')
+    .replace(/^[-•✓✗]\s+(.+)$/gm, '<li>$1</li>')
     .replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`)
     .replace(/\n{2,}/g, '</p><p>')
     .replace(/\n/g, '<br>');
@@ -958,7 +993,7 @@ function addMessage(agentKey, content, isViz = false) {
         <span class="msg-agent-time">${now}</span>
       </div>
       <div class="msg-agent-bubble">
-        ${svg ? `<div class="viz-frame">${svg}</div>` : '<div class="viz-fallback">Viz agent returned no inline SVG for this turn.</div>'}
+        ${svg ? `<div class="viz-frame">${svg}</div>` : '<div class="viz-fallback">Visual agent returned no inline SVG for this turn.</div>'}
       </div>`;
   } else if (agentKey === 'scribe') {
     el.innerHTML = `
@@ -998,6 +1033,24 @@ function updateStats(agents, topic) {
   document.getElementById('stat-msgs').textContent = msgCount;
   document.getElementById('stat-agents').textContent = agentsFired;
   document.getElementById('stat-topics').textContent = topicsCovered.size;
+}
+
+function buildOrchestratorMessage(routing) {
+  const lines = ['**Routing notes**'];
+  if (routing.topic) lines.push(`- Topic: ${routing.topic}`);
+  if (routing.reason) lines.push(`- Decision: ${routing.reason}`);
+
+  const steps = Array.isArray(routing.decision_steps)
+    ? routing.decision_steps.filter(Boolean)
+    : [];
+
+  if (steps.length) {
+    steps.forEach((step, index) => lines.push(`- Step ${index + 1}: ${step}`));
+  } else if (routing.agents?.length) {
+    lines.push(`- Selected agents: ${routing.agents.join(', ')}`);
+  }
+
+  return lines.join('\n');
 }
 
 function setStage(n) {
@@ -1073,6 +1126,7 @@ async function handleSend() {
   const agentsToFire = normalizeAgents(orchResult.agents || ['qa']);
   orchResult.agents = agentsToFire;
   setTrace(orchResult, agentsToFire);
+  addMessage('orch', buildOrchestratorMessage(orchResult));
   updateStats(agentsToFire, orchResult.topic);
 
   // Build conversation context for agents

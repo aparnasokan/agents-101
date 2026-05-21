@@ -4,7 +4,7 @@
 
 from .base import BaseAgent
 
-SYSTEM = """You are the Deploy agent in an Agent 101 live demo. Cover production deployment of agents.
+SYSTEM = """You are the Deploy agent in a self-guided learning tool. Cover production deployment of agents.
 
 Be practical — use specific tool and platform names.
 Topics to cover based on the question:

@@ -1,5 +1,5 @@
 # main.py
-# Entry point for the Agent 101 demo system.
+# Entry point for the Agent 101 learning system.
 # Starts a FastAPI server that:
 #   - Serves the HTML UI at http://localhost:<PORT>
 #   - Exposes /api/chat for the agent pipeline
@@ -36,14 +36,12 @@ except RuntimeError as exc:
 
 from memory import session
 from agents.orchestrator import OrchestratorAgent
-from agents.guide import GuideAgent
 from agents.concept import ConceptAgent
 from agents.viz import VizAgent
 from agents.code_agent import CodeAgent
 from agents.best_practices import BestPracticesAgent
 from agents.mcp_agent import McpAgent
 from agents.deploy import DeployAgent
-from agents.qa import QaAgent
 from agents.scribe import ScribeAgent
 
 
@@ -66,14 +64,12 @@ SERVER_PORT = get_server_port()
 # Instantiate all agents once at startup
 orchestrator = OrchestratorAgent()
 AGENTS = {
-    "guide":   GuideAgent(),
     "concept": ConceptAgent(),
     "viz":     VizAgent(),
     "code":    CodeAgent(),
     "bp":      BestPracticesAgent(),
     "mcp":     McpAgent(),
     "deploy":  DeployAgent(),
-    "qa":      QaAgent(),
     "scribe":  ScribeAgent(),
 }
 
@@ -104,7 +100,7 @@ class RouteResponse(BaseModel):
 def normalize_agents(agents: list[str], enforce_pairs: bool = True) -> list[str]:
     """Keep routing predictable and optionally enforce concept+viz pairing."""
     normalized: list[str] = []
-    for agent in agents or ["qa"]:
+    for agent in agents or ["concept"]:
         if agent not in normalized:
             normalized.append(agent)
 
@@ -115,7 +111,7 @@ def normalize_agents(agents: list[str], enforce_pairs: bool = True) -> list[str]
         viz_idx = normalized.index("viz")
         normalized.insert(viz_idx, "concept")
 
-    return normalized or ["qa"]
+    return normalized or ["concept"]
 
 def _plain_text(text: str) -> str:
     cleaned = re.sub(r"[*`#_>-]+", " ", text)
@@ -211,15 +207,86 @@ def _pick_viz_style(text: str) -> str:
     return "sequence"
 
 
+def _prefers_workflow_visual(user_message: str) -> bool:
+    lower = _plain_text(user_message).lower()
+    workflow_terms = (
+        "how would",
+        "how does",
+        "how do",
+        "how it works",
+        "how it would work",
+        "workflow",
+        "flow",
+        "pipeline",
+        "step by step",
+        "steps",
+        "process",
+    )
+    agent_terms = ("agent", "assistant", "bot", "calculator")
+    return any(term in lower for term in workflow_terms) or (
+        any(term in lower for term in agent_terms) and "work" in lower
+    )
+
+
+def _compact_visual_text(text: str, limit: int = 84) -> str:
+    cleaned = _plain_text(text)
+    cleaned = re.sub(
+        r"^(definition|analogy|mechanics|why it matters)\s*[:\-]?\s*",
+        "",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    cleaned = re.split(r"(?<=[.!?])\s+", cleaned, maxsplit=1)[0]
+    cleaned = cleaned.strip(" -:;,.")
+    if len(cleaned) <= limit:
+        return cleaned
+    return cleaned[:limit].rstrip() + "…"
+
+
+def _workflow_visual_points(user_message: str, concept_content: str) -> list[tuple[str, str]]:
+    lower = _plain_text(user_message).lower()
+    if any(term in lower for term in ("agent", "assistant", "bot", "calculator")):
+        subject = _plain_text(user_message)
+        subject = re.sub(r"^(how would|how does|how do|explain|show me|what is|what's)\s+", "", subject, flags=re.IGNORECASE)
+        subject = re.sub(r"\b(may|can|could|would|should)\s+\b", "", subject, flags=re.IGNORECASE)
+        subject = re.sub(r"\b(work|works|working)\b.*$", "", subject, flags=re.IGNORECASE).strip(" ?.,")
+        subject_match = re.search(
+            r"\b((?:an?\s+)?[a-z0-9\s-]{0,40}?(?:agent|assistant|bot)|calculator)\b",
+            subject,
+            flags=re.IGNORECASE,
+        )
+        if subject_match:
+            subject = subject_match.group(1).strip()
+        subject = subject or "the agent"
+        return [
+            ("", f"The user gives {subject} a goal or problem to solve."),
+            ("", f"It interprets the request and extracts the important inputs or constraints."),
+            ("", f"It runs the right tool or logic step to do the work reliably."),
+            ("", f"It returns the result clearly and can explain or verify the answer."),
+        ]
+
+    sentences = _concept_sentences(concept_content, limit=4)
+    return [("", sentence) for sentence in sentences[:4]]
+
+
 def build_viz_messages(user_message: str, concept_content: str) -> list[dict]:
-    """Give the Viz agent a focused brief instead of the whole conversation."""
+    """Give the Visual agent a focused brief instead of the whole conversation."""
     visual_items = _concept_visual_items(concept_content)
     sentences = _concept_sentences(concept_content)
     title = user_message.strip() or (sentences[0] if sentences else "Agent concept")
-    style = "concept_grid" if any(label for label, _ in visual_items) else _pick_viz_style(concept_content)
-    bullet_source = visual_items or [("", sentence) for sentence in sentences[:4]]
+    base_style = _pick_viz_style(f"{user_message}\n{concept_content}")
+    if _prefers_workflow_visual(user_message):
+        style = "workflow"
+    elif any(label for label, _ in visual_items) and base_style in {"sequence", "workflow"}:
+        style = "concept_grid"
+    else:
+        style = base_style
+    if style == "workflow":
+        bullet_source = _workflow_visual_points(user_message, concept_content)
+    else:
+        bullet_source = visual_items or [("", sentence) for sentence in sentences[:4]]
     bullet_points = "\n".join(
-        f"- {label}: {body}" if label else f"- {body}"
+        f"- {label}: {_compact_visual_text(body)}" if label else f"- {_compact_visual_text(body)}"
         for label, body in bullet_source[:4]
         if body
     ) or "- Explain the core concept clearly"
@@ -232,6 +299,37 @@ def build_viz_messages(user_message: str, concept_content: str) -> list[dict]:
     )
     return [
         {"role": "user", "content": user_message.strip() or "Explain this concept visually."},
+        {"role": "assistant", "content": brief},
+    ]
+
+
+def build_manual_viz_messages(user_message: str) -> list[dict]:
+    prompt = user_message.strip() or "Explain this agent idea visually."
+    lower = _plain_text(prompt).lower()
+    style = _pick_viz_style(prompt)
+    if _prefers_workflow_visual(prompt) or any(term in lower for term in ("agent", "assistant", "bot", "calculator")):
+        style = "workflow"
+
+    if style == "workflow":
+        bullet_source = _workflow_visual_points(prompt, prompt)
+    else:
+        bullet_source = [("", _compact_visual_text(sentence)) for sentence in _concept_sentences(prompt, limit=4)]
+
+    bullet_points = "\n".join(
+        f"- {label}: {_compact_visual_text(body)}" if label else f"- {_compact_visual_text(body)}"
+        for label, body in bullet_source[:4]
+        if body
+    ) or "- Explain the core concept clearly"
+
+    brief = (
+        "Visualization brief:\n"
+        f"Title: {prompt[:72]}\n"
+        f"Diagram style: {style}\n"
+        "Key points to visualize:\n"
+        f"{bullet_points}"
+    )
+    return [
+        {"role": "user", "content": prompt},
         {"role": "assistant", "content": brief},
     ]
 
@@ -265,22 +363,7 @@ def build_manual_agent_messages(agent_key: str, user_message: str, history: list
         ]
 
     if agent_key == "viz":
-        return [
-            {"role": "user", "content": prompt or "Explain this agent idea visually."},
-            {
-                "role": "assistant",
-                "content": (
-                    "Visualization brief:\n"
-                    f"Title: {prompt[:72] or 'Agent workflow'}\n"
-                    "Diagram style: workflow\n"
-                    "Key points to visualize:\n"
-                    f"- Show the workflow for: {prompt}\n"
-                    "- Focus on user input, decision steps, tool use or reasoning steps, and final output\n"
-                    "- Make it understandable to a beginner\n"
-                    "- Prefer a flowchart-style explanation"
-                ),
-            },
-        ]
+        return build_manual_viz_messages(prompt)
 
     return [
         *history,
@@ -304,22 +387,75 @@ async def run_agent(agent_key: str, messages: list[dict]) -> AgentResponse:
     return AgentResponse(agent=agent_key, content=result, is_viz=is_viz)
 
 
+def _routing_steps(raw_steps: object) -> list[str]:
+    if isinstance(raw_steps, str):
+        raw_steps = [raw_steps]
+    if not isinstance(raw_steps, list):
+        raw_steps = []
+
+    steps: list[str] = []
+    for step in raw_steps:
+        cleaned = _plain_text(str(step))
+        if cleaned and cleaned not in steps:
+            steps.append(cleaned[:160])
+
+    return steps[:4]
+
+
+def finalize_routing(routing: dict | None, manual_selection: bool = False) -> dict:
+    routing = dict(routing or {})
+    routing["agents"] = normalize_agents(
+        routing.get("agents", ["concept"]),
+        enforce_pairs=not manual_selection,
+    )
+    routing["reason"] = _plain_text(str(routing.get("reason", "")))
+    routing["topic"] = _plain_text(str(routing.get("topic", "")))
+
+    if not routing["reason"]:
+        routing["reason"] = (
+            "Manual agent selection override"
+            if manual_selection
+            else "Routing fallback — starting with the concept explanation"
+        )
+    if not routing["topic"]:
+        routing["topic"] = "manual selection" if manual_selection else "agent fundamentals"
+
+    steps = _routing_steps(
+        routing.get("decision_steps")
+        or routing.get("routing_steps")
+        or routing.get("chain_of_thought")
+    )
+    if not steps:
+        if manual_selection:
+            steps = [
+                "Manual agent selection is active in the UI.",
+                f"Running the chosen agents directly: {', '.join(routing['agents'])}.",
+            ]
+        else:
+            steps = [
+                f"Detected topic: {routing['topic']}.",
+                f"Selected agents: {', '.join(routing['agents'])}.",
+                routing["reason"],
+            ]
+
+    routing["decision_steps"] = steps
+    if manual_selection:
+        routing["manual_selection"] = True
+    return routing
+
+
 def get_routing(user_message: str, forced_agents: list[str] | None = None) -> dict:
     if forced_agents:
-        agents = normalize_agents(forced_agents, enforce_pairs=False)
-        return {
-            "agents": agents,
+        return finalize_routing({
+            "agents": forced_agents,
             "reason": "Manual agent selection override",
             "topic": "manual selection",
-            "manual_selection": True,
-        }
+        }, manual_selection=True)
 
     history = session.get_recent_history(turns=6)
     print(f"\n[Orchestrator] Routing: '{user_message[:60]}...'")
-    routing = orchestrator.route(user_message, history)
-    agents_to_fire = normalize_agents(routing.get("agents", ["qa"]))
-    routing["agents"] = agents_to_fire
-    print(f"[Orchestrator] → {agents_to_fire} | Reason: {routing.get('reason','')}")
+    routing = finalize_routing(orchestrator.route(user_message, history))
+    print(f"[Orchestrator] → {routing['agents']} | Reason: {routing.get('reason','')}")
     return routing
 
 
@@ -337,10 +473,8 @@ async def run_pipeline(user_message: str, routing: dict | None = None) -> ChatRe
 
     # Step 1: Orchestrate
     routing = routing or get_routing(user_message)
-    agents_to_fire = normalize_agents(
-        routing.get("agents", ["qa"]),
-        enforce_pairs=not routing.get("manual_selection", False),
-    )
+    routing = finalize_routing(routing, manual_selection=routing.get("manual_selection", False))
+    agents_to_fire = routing["agents"]
     topic = routing.get("topic", "")
     routing["agents"] = agents_to_fire
     session.add_topic(topic)
@@ -414,7 +548,7 @@ async def run_pipeline(user_message: str, routing: dict | None = None) -> ChatRe
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     local_url = f"http://localhost:{SERVER_PORT}"
-    print("\n🤖  Agent 101 Demo System")
+    print("\n🤖  Agent 101 Learning Studio")
     print("─" * 40)
     print(f"   Agents loaded: {len(AGENTS)}")
     print(f"   Azure deployment: {AZURE_OPENAI_CONFIG['deployment']}")
@@ -430,7 +564,7 @@ async def lifespan(app: FastAPI):
             print(f"   Could not open a browser automatically: {exc}")
     yield
 
-app = FastAPI(title="Agent 101 Demo", lifespan=lifespan)
+app = FastAPI(title="Agent 101 Learning Studio", lifespan=lifespan)
 
 # Serve static files (the HTML UI)
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -502,5 +636,5 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=SERVER_PORT,
         reload=False,
-        log_level="warning",  # keep terminal clean during demo
+        log_level="warning",  # keep terminal output focused
     )

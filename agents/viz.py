@@ -8,7 +8,7 @@ import re
 
 from .base import BaseAgent
 
-SYSTEM = """You are the Viz agent. Generate a clean SVG diagram that visually supports the Concept agent's explanation.
+SYSTEM = """You are the Visual agent. Generate a clean SVG diagram that visually supports the Concept agent's explanation.
 
 The conversation will include the original user question and may include an assistant message starting with:
 "Visualization brief:"
@@ -21,7 +21,7 @@ Requirements:
 - Dark background: start with <rect width="480" height="280" fill="#031114"/>
 - Colors: primary=#1df4f4, secondary=#a2f3f3, text=#ffffff, panel=#053057
 - Node boxes: rx=8, stroke-width=1, use fill with low opacity + matching stroke
-- Text: fill=#ffffff, font-size=11, font-family="Montserrat, Arial, sans-serif"
+- Text: fill=#ffffff, font-size=10, font-family="Montserrat, Arial, sans-serif"
 - Arrows: use <line> or <path> with marker-end for direction, stroke=rgba(162,243,243,0.3)
 - Add arrowhead marker in <defs>
 - Keep it simple: max 7 nodes, clear left-to-right or top-to-bottom flow
@@ -90,10 +90,42 @@ class VizAgent(BaseAgent):
         plain = re.sub(r"[*`#_>-]+", " ", text)
         return re.sub(r"\s+", " ", plain).strip()
 
+    def _strip_heading_prefix(self, text: str, label: str = "") -> str:
+        cleaned = self._plain_text(text)
+        prefixes = [
+            label,
+            "Definition",
+            "Analogy",
+            "Mechanics",
+            "Why it matters",
+            "How it works",
+            "Technical explanation",
+        ]
+        for prefix in prefixes:
+            if not prefix:
+                continue
+            updated = re.sub(
+                rf"^{re.escape(prefix)}\s*[:\-]?\s*",
+                "",
+                cleaned,
+                flags=re.IGNORECASE,
+            )
+            if updated != cleaned:
+                cleaned = updated.strip()
+        return cleaned
+
     def _clean_point(self, text: str) -> str:
         text = re.sub(r"^\s*\d+[\).\s:-]*", "", text)
         text = re.sub(r"^\s*[-•]\s*", "", text)
         return self._plain_text(text)
+
+    def _compact_text(self, text: str, limit: int = 72) -> str:
+        cleaned = self._strip_heading_prefix(text)
+        cleaned = re.split(r"(?<=[.!?])\s+", cleaned, maxsplit=1)[0]
+        cleaned = cleaned.strip(" -:;,.")
+        if len(cleaned) <= limit:
+            return cleaned
+        return cleaned[:limit].rstrip() + "…"
 
     def _short_label(self, text: str, fallback: str) -> str:
         cleaned = self._clean_point(text)
@@ -114,11 +146,12 @@ class VizAgent(BaseAgent):
             maybe_label = maybe_label.strip()
             remainder = remainder.strip()
             if maybe_label and remainder:
-                return maybe_label[:24], remainder
-        return fallback_label, cleaned
+                label = maybe_label[:24]
+                return label, self._strip_heading_prefix(remainder, label)
+        return fallback_label, self._strip_heading_prefix(cleaned, fallback_label)
 
     def _wrap_text(self, text: str, width: int = 24, max_lines: int = 3) -> list[str]:
-        text = self._clean_point(text)
+        text = self._compact_text(self._clean_point(text), limit=max(width * max_lines, width))
         words = text.split()
         if not words:
             return []
@@ -148,11 +181,11 @@ class VizAgent(BaseAgent):
         if not escaped:
             return ""
         tspans = "".join(
-            f'<tspan x="{x}" dy="{0 if idx == 0 else 10}">{line}</tspan>'
+            f'<tspan x="{x}" dy="{0 if idx == 0 else 9}">{line}</tspan>'
             for idx, line in enumerate(escaped)
         )
         return (
-            f'<text x="{x}" y="{y}" fill="{color}" font-size="8" '
+            f'<text x="{x}" y="{y}" fill="{color}" font-size="7" '
             f'font-family="{FONT}">{tspans}</text>'
         )
 
@@ -169,7 +202,7 @@ class VizAgent(BaseAgent):
             label, body = self._split_point(points[idx], fallback_label)
             fill = PRIMARY_FILL if color == PRIMARY else SECONDARY_FILL
             parts.append(f'<rect x="{x}" y="{y}" width="200" height="84" rx="10" fill="{fill}" stroke="{color}" stroke-width="1"/>')
-            parts.append(f'<text x="{x + 12}" y="{y + 15}" fill="{color}" font-size="8" font-family="{FONT}">{html.escape(label)}</text>')
+            parts.append(f'<text x="{x + 12}" y="{y + 15}" fill="{color}" font-size="7" font-family="{FONT}">{html.escape(label)}</text>')
             parts.append(self._svg_text_block(x + 12, y + 30, self._wrap_text(body, width=31, max_lines=4)))
         return "".join(parts)
 
@@ -182,13 +215,39 @@ class VizAgent(BaseAgent):
         points = (points + ["", "", ""])[:3]
         for idx, point in enumerate(points):
             cards.append(f'<rect x="{xs[idx]}" y="66" width="124" height="112" rx="10" fill="{fills[idx]}" stroke="{colors[idx]}" stroke-width="1"/>')
-            cards.append(f'<text x="{xs[idx] + 14}" y="88" fill="{colors[idx]}" font-size="8" font-family="{FONT}">{labels[idx]}</text>')
+            cards.append(f'<text x="{xs[idx] + 14}" y="88" fill="{colors[idx]}" font-size="7" font-family="{FONT}">{labels[idx]}</text>')
             cards.append(self._svg_text_block(xs[idx] + 14, 108, self._wrap_text(point or labels[idx], width=19, max_lines=5)))
         return (
             f'<line x1="148" y1="122" x2="178" y2="122" stroke="{ARROW}" stroke-width="1.5" marker-end="url(#arrow)"/>'
             f'<line x1="302" y1="122" x2="332" y2="122" stroke="{ARROW}" stroke-width="1.5" marker-end="url(#arrow)"/>'
             + "".join(cards)
         )
+
+    def _workflow_svg(self, title: str, points: list[str]) -> str:
+        points = (points + ["", "", "", ""])[:4]
+        cards = [
+            (32, 76, 118, 60, PRIMARY, "Ask", points[0] or "The user describes the problem to solve."),
+            (182, 42, 116, 60, SECONDARY, "Interpret", points[1] or "The agent extracts intent, numbers, and constraints."),
+            (182, 158, 116, 60, PRIMARY, "Compute", points[2] or "A tool or internal logic performs the calculation."),
+            (332, 76, 116, 60, SECONDARY, "Respond", points[3] or "The agent returns the answer with a quick explanation."),
+        ]
+
+        parts = [
+            f'<rect x="176" y="112" width="128" height="34" rx="17" fill="{PANEL_FILL}" stroke="{SECONDARY}" stroke-width="1"/>',
+            f'<text x="240" y="132" text-anchor="middle" fill="{TEXT}" font-size="8" font-family="{FONT}">decision + tool use</text>',
+        ]
+
+        for x, y, w, h, color, label, body in cards:
+            fill = PRIMARY_FILL if color == PRIMARY else SECONDARY_FILL
+            parts.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="10" fill="{fill}" stroke="{color}" stroke-width="1"/>')
+            parts.append(f'<text x="{x + 12}" y="{y + 16}" fill="{color}" font-size="7" font-family="{FONT}">{html.escape(label)}</text>')
+            parts.append(self._svg_text_block(x + 12, y + 30, self._wrap_text(body, width=20, max_lines=3)))
+
+        parts.append(f'<line x1="150" y1="106" x2="182" y2="86" stroke="{ARROW}" stroke-width="1.5" marker-end="url(#arrow)"/>')
+        parts.append(f'<line x1="150" y1="106" x2="182" y2="188" stroke="{ARROW}" stroke-width="1.5" marker-end="url(#arrow)"/>')
+        parts.append(f'<line x1="298" y1="86" x2="332" y2="106" stroke="{ARROW}" stroke-width="1.5" marker-end="url(#arrow)"/>')
+        parts.append(f'<line x1="298" y1="188" x2="332" y2="106" stroke="{ARROW}" stroke-width="1.5" marker-end="url(#arrow)"/>')
+        return "".join(parts)
 
     def _comparison_svg(self, title: str, points: list[str]) -> str:
         left = points[0] if points else "Option A"
@@ -200,13 +259,13 @@ class VizAgent(BaseAgent):
             f'<rect x="32" y="66" width="168" height="112" rx="10" fill="{PRIMARY_FILL}" stroke="{PRIMARY}" stroke-width="1"/>'
             f'<rect x="280" y="66" width="168" height="112" rx="10" fill="{SECONDARY_FILL}" stroke="{SECONDARY}" stroke-width="1"/>'
             f'<line x1="220" y1="84" x2="260" y2="84" stroke="{ARROW}" stroke-width="1.5"/>'
-            f'<text x="46" y="88" fill="{PRIMARY}" font-size="8" font-family="{FONT}">{html.escape(left_label)}</text>'
-            f'<text x="294" y="88" fill="{SECONDARY}" font-size="8" font-family="{FONT}">{html.escape(right_label)}</text>'
+            f'<text x="46" y="88" fill="{PRIMARY}" font-size="7" font-family="{FONT}">{html.escape(left_label)}</text>'
+            f'<text x="294" y="88" fill="{SECONDARY}" font-size="7" font-family="{FONT}">{html.escape(right_label)}</text>'
             + self._svg_text_block(46, 108, self._wrap_text(left, width=26, max_lines=6))
             + self._svg_text_block(294, 108, self._wrap_text(right, width=26, max_lines=6))
             + (
                 f'<rect x="126" y="186" width="228" height="22" rx="8" fill="{PANEL_FILL}" stroke="{SECONDARY}" stroke-width="1"/>'
-                f'<text x="240" y="200" text-anchor="middle" fill="{TEXT}" font-size="8" font-family="{FONT}">{html.escape(self._clean_point(shared)[:64])}</text>'
+                f'<text x="240" y="200" text-anchor="middle" fill="{TEXT}" font-size="7" font-family="{FONT}">{html.escape(self._clean_point(shared)[:64])}</text>'
                 if shared else ""
             )
         )
@@ -222,7 +281,7 @@ class VizAgent(BaseAgent):
         for x, y, color, label, text in nodes:
             fill = PRIMARY_FILL if color == PRIMARY else SECONDARY_FILL
             parts.append(f'<rect x="{x}" y="{y}" width="112" height="60" rx="10" fill="{fill}" stroke="{color}" stroke-width="1"/>')
-            parts.append(f'<text x="{x + 14}" y="{y + 16}" fill="{color}" font-size="8" font-family="{FONT}">{html.escape(label)}</text>')
+            parts.append(f'<text x="{x + 14}" y="{y + 16}" fill="{color}" font-size="7" font-family="{FONT}">{html.escape(label)}</text>')
             parts.append(self._svg_text_block(x + 14, y + 30, self._wrap_text(text or label, width=18, max_lines=3)))
         parts.append(f'<path d="M210 74 C168 82, 132 104, 114 128" fill="none" stroke="{ARROW}" stroke-width="1.5" marker-end="url(#arrow)"/>')
         parts.append(f'<path d="M170 158 C212 186, 268 186, 314 158" fill="none" stroke="{ARROW}" stroke-width="1.5" marker-end="url(#arrow)"/>')
@@ -238,8 +297,8 @@ class VizAgent(BaseAgent):
         for idx, point in enumerate(points):
             fill = PRIMARY_FILL if colors[idx] == PRIMARY else SECONDARY_FILL
             parts.append(f'<rect x="72" y="{ys[idx]}" width="336" height="32" rx="10" fill="{fill}" stroke="{colors[idx]}" stroke-width="1"/>')
-            parts.append(f'<text x="92" y="{ys[idx] + 18}" fill="{colors[idx]}" font-size="8" font-family="{FONT}">{html.escape(labels[idx])}</text>')
-            parts.append(f'<text x="170" y="{ys[idx] + 18}" fill="{TEXT}" font-size="8" font-family="{FONT}">{html.escape(self._clean_point(point)[:56])}</text>')
+            parts.append(f'<text x="92" y="{ys[idx] + 18}" fill="{colors[idx]}" font-size="7" font-family="{FONT}">{html.escape(labels[idx])}</text>')
+            parts.append(f'<text x="170" y="{ys[idx] + 18}" fill="{TEXT}" font-size="7" font-family="{FONT}">{html.escape(self._clean_point(point)[:56])}</text>')
         return "".join(parts)
 
     def _hierarchy_svg(self, title: str, points: list[str]) -> str:
@@ -274,7 +333,7 @@ class VizAgent(BaseAgent):
         elif style == "hierarchy":
             body = self._hierarchy_svg(title, points)
         elif style == "workflow":
-            body = self._sequence_svg(title, points)
+            body = self._workflow_svg(title, points)
         elif style == "concept_grid":
             body = self._concept_grid_svg(title, points)
         else:
@@ -287,7 +346,7 @@ class VizAgent(BaseAgent):
     <path d="M 0 0 L 10 5 L 0 10 z" fill="{ARROW_HEAD}"/>
   </marker>
   </defs>
-<text x="18" y="20" fill="{TEXT_SOFT}" font-size="9" font-family="{FONT}">concept support fallback</text>
-<text x="24" y="42" fill="{SECONDARY}" font-size="11" font-family="{FONT}">{title}</text>
+<text x="18" y="20" fill="{TEXT_SOFT}" font-size="8" font-family="{FONT}">concept support fallback</text>
+<text x="24" y="42" fill="{SECONDARY}" font-size="10" font-family="{FONT}">{title}</text>
 {body}
 </svg>"""

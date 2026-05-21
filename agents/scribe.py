@@ -1,6 +1,6 @@
 # agents/scribe.py
 # The Scribe reads the full session history and generates a take-home cheat sheet.
-# Fired at the end of the demo or when the user explicitly asks for a summary.
+# Fired on demand when the user wants a summary.
 
 import re
 
@@ -56,7 +56,7 @@ class ScribeAgent(BaseAgent):
         the standard message history format.
         """
         prompt = (
-            f"Here is the full Agent 101 demo session transcript:\n\n"
+            f"Here is the full Agent 101 learning session transcript:\n\n"
             f"{full_history_text}\n\n"
             f"Generate the cheat sheet now, covering only what was actually discussed."
         )

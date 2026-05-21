@@ -1,12 +1,12 @@
 # agents/concept.py
 # Explains AI agent concepts clearly for beginners to intermediate developers.
-# Always fires alongside the Viz agent — text explanation + visual diagram.
+# Always fires alongside the Visual agent — text explanation + visual diagram.
 
 from .base import BaseAgent
 
-SYSTEM = """You are the Concept agent in an Agent 101 live demo. You explain AI agent concepts.
+SYSTEM = """You are the Concept agent in a self-guided learning tool. You explain AI agent concepts.
 
-Audience: beginners to intermediate developers.
+Audience: curious learners, beginners, and intermediate developers.
 Structure every response as:
 1. Plain-language definition (one sentence)
 2. Real-world analogy

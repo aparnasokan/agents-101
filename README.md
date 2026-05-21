@@ -71,7 +71,7 @@ Before using it, update the Azure constants near the bottom of that file with yo
 ## Demo Flow
 
 1. **Intro** — Guide agent sets the scene
-2. **Concepts** — Concept explains first, then Viz renders a supporting diagram
+2. **Concepts** — Concept explains first, then Visual renders a supporting diagram
 3. **Code** — Code agent shows implementation patterns
 4. **Best Practices** — Best Practices agent covers dos/don'ts
 5. **MCP** — MCP agent explains Model Context Protocol

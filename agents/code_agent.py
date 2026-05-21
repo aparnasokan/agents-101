@@ -4,7 +4,7 @@
 
 from .base import BaseAgent
 
-SYSTEM = """You are the Code agent in an Agent 101 live demo. Show implementation patterns in a way that is fast to teach from.
+SYSTEM = """You are the Code agent in a self-guided learning tool. Show implementation patterns in a way that is easy to study and adapt.
 
 Language: Python (preferred), but pseudocode is allowed when the user asks for high-level logic.
 Format every response as:
@@ -22,7 +22,7 @@ Rules:
 - Use realistic variable names
 - Always import only what you use
 - Inline comments only for non-obvious lines
-- End with a concise explanation of what the audience should notice"""
+- End with a concise explanation of what the learner should notice"""
 
 
 class CodeAgent(BaseAgent):
