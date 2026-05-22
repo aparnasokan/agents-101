@@ -130,6 +130,8 @@ def _canonical_heading(line: str) -> str:
         "plain language definition": "Definition",
         "plain language": "Definition",
         "definition": "Definition",
+        "real world example": "Example",
+        "example": "Example",
         "real world analogy": "Analogy",
         "analogy": "Analogy",
         "how it works technically": "Mechanics",
@@ -228,36 +230,48 @@ def _prefers_workflow_visual(user_message: str) -> bool:
     )
 
 
-def _compact_visual_text(text: str, limit: int = 84) -> str:
+def _clean_visual_text(text: str) -> str:
     cleaned = _plain_text(text)
     cleaned = re.sub(
-        r"^(definition|analogy|mechanics|why it matters)\s*[:\-]?\s*",
+        r"^(definition|example|analogy|mechanics|why it matters)\s*[:\-]?\s*",
         "",
         cleaned,
         flags=re.IGNORECASE,
     )
-    cleaned = re.split(r"(?<=[.!?])\s+", cleaned, maxsplit=1)[0]
-    cleaned = cleaned.strip(" -:;,.")
-    if len(cleaned) <= limit:
-        return cleaned
-    return cleaned[:limit].rstrip() + "…"
+    return cleaned.strip(" -:;,.")
+
+
+def _visual_subject(user_message: str) -> str:
+    subject = _plain_text(user_message)
+    subject = re.sub(r"^(how would|how does|how do|explain|show me|what is|what's)\s+", "", subject, flags=re.IGNORECASE)
+    subject = re.sub(r"\b(may|can|could|would|should)\s+\b", "", subject, flags=re.IGNORECASE)
+    subject = re.sub(r"\b(work|works|working)\b.*$", "", subject, flags=re.IGNORECASE).strip(" ?.,")
+    subject_match = re.search(
+        r"\b((?:an?\s+)?[a-z0-9\s-]{0,40}?(?:agent|assistant|bot)|calculator)\b",
+        subject,
+        flags=re.IGNORECASE,
+    )
+    if subject_match:
+        subject = subject_match.group(1).strip()
+    return subject
+
+
+def _visual_title(user_message: str, concept_content: str, style: str) -> str:
+    subject = _visual_subject(user_message)
+    if style == "workflow":
+        return f"{subject.title()} Workflow" if subject else "How It Works"
+    if subject:
+        return subject.title()
+    sentences = _concept_sentences(concept_content, limit=1)
+    if sentences:
+        return _clean_visual_text(sentences[0])[:48]
+    return "Agent Concept"
 
 
 def _workflow_visual_points(user_message: str, concept_content: str) -> list[tuple[str, str]]:
     lower = _plain_text(user_message).lower()
     if any(term in lower for term in ("agent", "assistant", "bot", "calculator")):
-        subject = _plain_text(user_message)
-        subject = re.sub(r"^(how would|how does|how do|explain|show me|what is|what's)\s+", "", subject, flags=re.IGNORECASE)
-        subject = re.sub(r"\b(may|can|could|would|should)\s+\b", "", subject, flags=re.IGNORECASE)
-        subject = re.sub(r"\b(work|works|working)\b.*$", "", subject, flags=re.IGNORECASE).strip(" ?.,")
-        subject_match = re.search(
-            r"\b((?:an?\s+)?[a-z0-9\s-]{0,40}?(?:agent|assistant|bot)|calculator)\b",
-            subject,
-            flags=re.IGNORECASE,
-        )
-        if subject_match:
-            subject = subject_match.group(1).strip()
-        subject = subject or "the agent"
+        subject = _visual_subject(user_message) or "the agent"
         return [
             ("", f"The user gives {subject} a goal or problem to solve."),
             ("", f"It interprets the request and extracts the important inputs or constraints."),
@@ -273,7 +287,6 @@ def build_viz_messages(user_message: str, concept_content: str) -> list[dict]:
     """Give the Visual agent a focused brief instead of the whole conversation."""
     visual_items = _concept_visual_items(concept_content)
     sentences = _concept_sentences(concept_content)
-    title = user_message.strip() or (sentences[0] if sentences else "Agent concept")
     base_style = _pick_viz_style(f"{user_message}\n{concept_content}")
     if _prefers_workflow_visual(user_message):
         style = "workflow"
@@ -281,12 +294,13 @@ def build_viz_messages(user_message: str, concept_content: str) -> list[dict]:
         style = "concept_grid"
     else:
         style = base_style
+    title = _visual_title(user_message, concept_content, style)
     if style == "workflow":
         bullet_source = _workflow_visual_points(user_message, concept_content)
     else:
         bullet_source = visual_items or [("", sentence) for sentence in sentences[:4]]
     bullet_points = "\n".join(
-        f"- {label}: {_compact_visual_text(body)}" if label else f"- {_compact_visual_text(body)}"
+        f"- {label}: {_clean_visual_text(body)}" if label else f"- {_clean_visual_text(body)}"
         for label, body in bullet_source[:4]
         if body
     ) or "- Explain the core concept clearly"
@@ -309,21 +323,22 @@ def build_manual_viz_messages(user_message: str) -> list[dict]:
     style = _pick_viz_style(prompt)
     if _prefers_workflow_visual(prompt) or any(term in lower for term in ("agent", "assistant", "bot", "calculator")):
         style = "workflow"
+    title = _visual_title(prompt, prompt, style)
 
     if style == "workflow":
         bullet_source = _workflow_visual_points(prompt, prompt)
     else:
-        bullet_source = [("", _compact_visual_text(sentence)) for sentence in _concept_sentences(prompt, limit=4)]
+        bullet_source = [("", _clean_visual_text(sentence)) for sentence in _concept_sentences(prompt, limit=4)]
 
     bullet_points = "\n".join(
-        f"- {label}: {_compact_visual_text(body)}" if label else f"- {_compact_visual_text(body)}"
+        f"- {label}: {_clean_visual_text(body)}" if label else f"- {_clean_visual_text(body)}"
         for label, body in bullet_source[:4]
         if body
     ) or "- Explain the core concept clearly"
 
     brief = (
         "Visualization brief:\n"
-        f"Title: {prompt[:72]}\n"
+        f"Title: {title[:72]}\n"
         f"Diagram style: {style}\n"
         "Key points to visualize:\n"
         f"{bullet_points}"
@@ -402,6 +417,21 @@ def _routing_steps(raw_steps: object) -> list[str]:
     return steps[:4]
 
 
+def _routing_thinking(raw_thinking: object, reason: str, topic: str, agents: list[str]) -> str:
+    if isinstance(raw_thinking, list):
+        parts = [_plain_text(str(part)) for part in raw_thinking if _plain_text(str(part))]
+        thinking = "\n\n".join(parts)
+    else:
+        thinking = str(raw_thinking or "")
+    thinking = thinking.strip()
+    if thinking:
+        return thinking[:1600]
+    return (
+        f"The request appears to be about {topic or 'agent fundamentals'}, so the orchestrator is leaning on "
+        f"{', '.join(agents)}. {reason}"
+    )
+
+
 def finalize_routing(routing: dict | None, manual_selection: bool = False) -> dict:
     routing = dict(routing or {})
     routing["agents"] = normalize_agents(
@@ -419,6 +449,12 @@ def finalize_routing(routing: dict | None, manual_selection: bool = False) -> di
         )
     if not routing["topic"]:
         routing["topic"] = "manual selection" if manual_selection else "agent fundamentals"
+    routing["thinking"] = _routing_thinking(
+        routing.get("thinking") or routing.get("rationale") or routing.get("analysis"),
+        routing["reason"],
+        routing["topic"],
+        routing["agents"],
+    )
 
     steps = _routing_steps(
         routing.get("decision_steps")

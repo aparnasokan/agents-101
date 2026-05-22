@@ -121,6 +121,7 @@ html, body {
 .msg-agent-tag { padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; border: 1px solid var(--border2); }
 .msg-agent-time { font-size: 11px; color: var(--text3); }
 .msg-agent-bubble { background: rgba(5,48,87,0.56); border: 1px solid var(--border); border-radius: 4px 16px 16px 16px; padding: 14px 16px; font-size: 14px; line-height: 1.65; backdrop-filter: blur(10px); }
+.msg-agent-orch .msg-agent-bubble { background: rgba(162,243,243,0.08); border-color: rgba(162,243,243,0.28); color: var(--accent-pale); font-style: italic; }
 .msg-agent-bubble p { margin-bottom: 10px; }
 .msg-agent-bubble p:last-child { margin-bottom: 0; }
 .msg-agent-bubble strong { color: var(--accent-pale); font-weight: 500; }
@@ -473,23 +474,11 @@ function setTrace(routing, agents) {
 }
 
 function buildOrchestratorMessage(routing) {
-  const lines = ['**Routing notes**'];
-  if (routing.topic) lines.push(`- Topic: ${routing.topic}`);
-  if (routing.reason) lines.push(`- Decision: ${routing.reason}`);
-
-  const steps = Array.isArray(routing.decision_steps)
-    ? routing.decision_steps.filter(Boolean)
-    : [];
-
-  if (steps.length) {
-    steps.forEach((step, index) => {
-      lines.push(`- Step ${index + 1}: ${step}`);
-    });
-  } else if (routing.agents?.length) {
-    lines.push(`- Selected agents: ${routing.agents.join(', ')}`);
-  }
-
-  return lines.join('\n');
+  if (routing.thinking) return routing.thinking;
+  const sections = [];
+  if (routing.reason) sections.push(`Decision: ${routing.reason}`);
+  if (routing.agents?.length) sections.push(`Agents: ${routing.agents.join(', ')}`);
+  return sections.join('\n\n');
 }
 
 function updateStats(stats) {
@@ -782,6 +771,15 @@ function formatContent(text) {
   return html;
 }
 
+function formatThinking(text) {
+  return String(text || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\n{2,}/g, '</p><p>')
+    .replace(/\n/g, '<br>');
+}
+
 function extractSvg(content) {
   if (!content) return '';
   const attempts = [content, content.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')];
@@ -796,7 +794,7 @@ function addAgentMsg(agentKey, content, isViz) {
   const meta = AGENT_META[agentKey] || { label: agentKey, tag: 'tag-orch' };
   const chat = document.getElementById('chat');
   const el = document.createElement('div');
-  el.className = 'msg-agent';
+  el.className = `msg-agent${agentKey === 'orch' ? ' msg-agent-orch' : ''}`;
   const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   let body = '';
@@ -805,6 +803,8 @@ function addAgentMsg(agentKey, content, isViz) {
     body = svg
       ? `<div class="viz-frame">${svg}</div>`
       : '<div class="viz-fallback">Visual agent returned no inline SVG for this turn.</div>';
+  } else if (agentKey === 'orch') {
+    body = `<p>${formatThinking(content)}</p>`;
   } else if (agentKey === 'scribe') {
     const safe = content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     body = `<div class="scribe-doc">${safe}</div>`;

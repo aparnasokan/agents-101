@@ -31,6 +31,7 @@ Output ONLY valid JSON — no explanation, no markdown:
   "agents": ["agent1", "agent2"],
   "reason": "one sentence explaining the routing decision",
   "topic": "short topic label e.g. 'tool calling' or 'memory patterns'",
+  "thinking": "A fuller routing rationale written for the learner. Explain what signals you noticed in the question, why those signals matter, and why these agents were selected. Use 3-6 sentences and write naturally.",
   "decision_steps": [
     "Short user-visible routing note 1",
     "Short user-visible routing note 2"
@@ -48,7 +49,7 @@ class OrchestratorAgent(BaseAgent):
         Returns a dict with: agents (list), reason (str), topic (str).
         """
         messages = history + [{"role": "user", "content": user_message}]
-        raw = self.run(messages, max_tokens=256)
+        raw = self.run(messages, max_tokens=700)
 
         try:
             # Strip markdown code fences if the model wraps JSON in them.

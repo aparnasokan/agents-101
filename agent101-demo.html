@@ -667,11 +667,12 @@ const AGENT_SYSTEMS = {
 Keep responses warm, concise, presenter-friendly. Use clear signposting like "Let's move to...", "We've just covered...", "Coming up next...". 
 Max 3 short paragraphs. No code. Plain language for a mixed technical/non-technical audience.`,
 
-  concept: `You are the Concept agent in an Agent 101 live demo. You explain AI agent concepts clearly.
-Audience: beginners to intermediate developers. 
+  concept: `You are the Concept agent in a self-guided learning tool. You explain AI agent concepts clearly.
+Audience: curious learners, beginners, and intermediate developers.
 - Use plain language first, then precise terms
-- Give a real-world analogy for every concept
-- Structure: definition → how it works → why it matters
+- Prefer grounded real-world examples over clever analogies
+- Only use an analogy if it genuinely clarifies the concept
+- Structure: definition → example or analogy → how it works → why it matters
 - Max 250 words
 - No code (the Code agent handles that)
 - Bold key terms`,
@@ -682,7 +683,7 @@ The conversation will include the original user question and may include an assi
 Use that brief as the primary source for the diagram, especially its title, diagram style, and key points.
 Output ONLY a raw SVG element — no explanation, no markdown, no prose. Just the SVG.
 Requirements:
-- viewBox="0 0 480 220"
+- Use a 480-wide viewBox and expand the height when needed so all text remains visible
 - Dark theme: background rect fill="#0c0c0f"
 - Use these colors for nodes: agents=#7c6dfa, data=#5ec4e8, user=#f0c96b, system=#5ee8a8, external=#d06bf0
 - Node boxes: rx=8, stroke-width=1, fill=rgba(color,0.12), stroke=rgba(color,0.4)
@@ -692,7 +693,8 @@ Requirements:
 - Make the visual explain the concept itself, not the multi-agent system, unless the concept is explicitly about orchestration or routing
 - Prefer visual structures like stages, loops, components, inputs/outputs, or before/after states based on the concept explanation
 - If the brief suggests sequence, cycle, comparison, layers, or hierarchy, reflect that structure directly in the SVG
-- Add a subtle title in top-left: font-size=10, fill=rgba(255,255,255,0.3)`,
+- Do not show the raw user query or a visible title inside the diagram
+- Do not truncate text with ellipses; expand boxes or stack cards vertically if needed so all text is visible`,
 
   code: `You are the Code agent in an Agent 101 live demo. Show implementation patterns in a way that is fast to teach from.
 Language: Python (preferred), but pseudocode is allowed when the user asks for high-level logic.
@@ -854,15 +856,27 @@ function pickVizStyle(text) {
   return 'sequence';
 }
 
+function prefersWorkflowVisual(text) {
+  const lower = plainText(text).toLowerCase();
+  return ['how would', 'how does', 'how do', 'workflow', 'flow', 'pipeline', 'step by step', 'process']
+    .some(term => lower.includes(term));
+}
+
+function cleanVisualText(text) {
+  return plainText(text)
+    .replace(/^(definition|example|analogy|mechanics|why it matters)\s*[:\-]?\s*/i, '')
+    .trim();
+}
+
 function buildVizHistory(agentHistory, conceptText) {
   if (!conceptText || !conceptText.trim() || conceptText.startsWith('Error:')) return agentHistory;
   const sentences = conceptSentences(conceptText);
-  const title = (sentences[0] || conceptText).slice(0, 72);
-  const style = pickVizStyle(conceptText);
-  const bulletPoints = (sentences.slice(0, 4).map(sentence => `- ${sentence}`).join('\n')) || '- Explain the core concept clearly';
+  const latestUser = agentHistory[agentHistory.length - 1]?.content || 'Explain this concept visually.';
+  const style = prefersWorkflowVisual(latestUser) ? 'workflow' : pickVizStyle(conceptText);
+  const bulletPoints = (sentences.slice(0, 4).map(sentence => `- ${cleanVisualText(sentence)}`).join('\n')) || '- Explain the core concept clearly';
   return [
-    { role: 'user', content: agentHistory[agentHistory.length - 1]?.content || 'Explain this concept visually.' },
-    { role: 'assistant', content: `Visualization brief:\nTitle: ${title}\nDiagram style: ${style}\nKey points to visualize:\n${bulletPoints}` }
+    { role: 'user', content: latestUser },
+    { role: 'assistant', content: `Visualization brief:\nDiagram style: ${style}\nKey points to visualize:\n${bulletPoints}` }
   ];
 }
 
