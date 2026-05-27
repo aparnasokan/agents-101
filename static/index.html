@@ -5,21 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Agent 101 — Learning Studio</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>(function(){const t=localStorage.getItem('agent101_theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');})()</script>
 <style>
 :root {
   --bg: #031114;
-  --bg2: rgba(5,48,87,0.88);
-  --bg3: rgba(5,48,87,0.62);
+  --bg-panel: #053057;
+  --bg-card: #0a3d6b;
+  --bg-input: #021e38;
+  --bg2: #053057;
+  --bg3: #0a3d6b;
   --bg4: rgba(162,243,243,0.12);
   --border: rgba(162,243,243,0.16);
   --border2: rgba(29,244,244,0.32);
   --text: #ffffff;
   --text2: rgba(255,255,255,0.78);
-  --text3: rgba(162,243,243,0.72);
+  --text3: #a2f3f3;
   --accent: #1df4f4;
   --accent-soft: rgba(29,244,244,0.14);
   --accent-soft-strong: rgba(29,244,244,0.22);
   --accent-pale: #a2f3f3;
+  --bg-orch-bubble: rgba(162,243,243,0.08);
+  --border-orch: rgba(162,243,243,0.28);
+  --body-bg:
+    radial-gradient(circle at top left, rgba(29,244,244,0.08), transparent 28%),
+    radial-gradient(circle at top right, rgba(162,243,243,0.06), transparent 24%),
+    #031114;
   --font-display: "Montserrat", "DM Sans", system-ui, sans-serif;
   --font-body: "Montserrat", "DM Sans", system-ui, sans-serif;
   --font-mono: "DM Mono", monospace;
@@ -32,13 +42,44 @@
   --c-deploy:  #1df4f4;
   --c-scribe:  #ffffff;
 }
+
+[data-theme="light"] {
+  --bg: #dde8f5;
+  --bg-panel: #f0f7ff;
+  --bg-card: #ffffff;
+  --bg-input: #e8f1fb;
+  --bg2: #f0f7ff;
+  --bg3: #ffffff;
+  --bg4: rgba(8,100,168,0.10);
+  --border: rgba(8,100,168,0.16);
+  --border2: rgba(8,100,168,0.32);
+  --text: #08192e;
+  --text2: rgba(8,25,46,0.70);
+  --text3: #1e5fa8;
+  --accent: #0882a8;
+  --accent-soft: rgba(8,130,168,0.10);
+  --accent-soft-strong: rgba(8,130,168,0.18);
+  --accent-pale: #0a6e8f;
+  --bg-orch-bubble: rgba(8,100,168,0.07);
+  --border-orch: rgba(8,100,168,0.22);
+  --body-bg:
+    radial-gradient(circle at top left, rgba(8,130,168,0.06), transparent 28%),
+    radial-gradient(circle at top right, rgba(8,100,168,0.04), transparent 24%),
+    #dde8f5;
+  --c-orch:    #08192e;
+  --c-concept: #0882a8;
+  --c-viz:     #0a6e8f;
+  --c-code:    #0882a8;
+  --c-bp:      #08192e;
+  --c-mcp:     #0a6e8f;
+  --c-deploy:  #0882a8;
+  --c-scribe:  #08192e;
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
   height: 100%;
-  background:
-    radial-gradient(circle at top left, rgba(29,244,244,0.14), transparent 28%),
-    radial-gradient(circle at top right, rgba(162,243,243,0.12), transparent 24%),
-    linear-gradient(180deg, #053057 0%, #031114 68%);
+  background: var(--body-bg);
   color: var(--text);
   font-family: var(--font-body);
   overflow: hidden;
@@ -49,7 +90,7 @@ html, body {
 #shell > * { min-height: 0; }
 
 /* Topbar */
-#topbar { grid-column: 1/-1; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 1px solid var(--border); background: rgba(3,17,20,0.84); backdrop-filter: blur(14px); z-index: 10; }
+#topbar { grid-column: 1/-1; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 1px solid var(--border); background: var(--bg); z-index: 10; }
 .logo { font-family: var(--font-display); font-size: 19px; letter-spacing: 0.03em; }
 .logo em { color: var(--accent); font-style: italic; }
 #topbar-right { display: flex; gap: 8px; }
@@ -67,8 +108,8 @@ html, body {
 .help-btn:hover, .help-btn:focus-visible { background: var(--accent-soft); color: var(--text); outline: none; }
 .help-tooltip {
   position: absolute; top: calc(100% + 10px); right: 0; width: 264px; padding: 12px 14px;
-  border-radius: 12px; border: 1px solid var(--border2); background: rgba(3,17,20,0.96);
-  color: var(--text2); font-size: 12px; line-height: 1.55; box-shadow: 0 10px 30px rgba(0,0,0,0.28);
+  border-radius: 12px; border: 1px solid var(--border2); background: var(--bg);
+  color: var(--text2); font-size: 12px; line-height: 1.55; box-shadow: 0 10px 30px rgba(0,0,0,0.4);
   opacity: 0; pointer-events: none; transform: translateY(-4px); transition: opacity 0.16s, transform 0.16s;
 }
 .help-tooltip strong { color: var(--text); font-weight: 600; }
@@ -78,7 +119,7 @@ html, body {
 }
 
 /* Sidebar */
-#sidebar { border-right: 1px solid var(--border); background: rgba(3,17,20,0.78); backdrop-filter: blur(12px); display: flex; flex-direction: column; overflow: hidden; }
+#sidebar { border-right: 1px solid var(--border); background: var(--bg); display: flex; flex-direction: column; overflow: hidden; }
 #sidebar-head { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
 #sidebar-head h3 { font-size: 10px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text3); font-family: var(--font-display); }
 .sidebar-note { margin-top: 6px; font-size: 11px; line-height: 1.45; color: var(--text3); }
@@ -86,7 +127,7 @@ html, body {
 #agent-list { flex: 1; overflow-y: auto; padding: 8px; -webkit-overflow-scrolling: touch; }
 #agent-list::-webkit-scrollbar { display: none; }
 .agent-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer; transition: background 0.15s; margin-bottom: 2px; }
-.agent-row:hover { background: rgba(29,244,244,0.08); }
+.agent-row:hover { background: var(--accent-soft); }
 .agent-row.selected { background: var(--accent-soft); outline: 1px solid var(--border2); }
 .agent-row.firing { background: var(--bg4); }
 .agent-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; border: 1px solid var(--border2); font-family: var(--font-mono); }
@@ -97,14 +138,32 @@ html, body {
 .agent-row.firing .agent-status-dot { background: #fff; animation: blink-dot 0.6s infinite; }
 @keyframes blink-dot { 0%,100%{opacity:1} 50%{opacity:0.2} }
 
-#sidebar-prompts { padding: 10px 8px; border-top: 1px solid var(--border); }
-#sidebar-prompts h4 { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); padding: 0 8px 8px; font-weight: 500; font-family: var(--font-display); }
+#sidebar-prompts { border-top: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; }
+.sp-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.sp-tab { flex: 1; padding: 8px 0; font-size: 11px; font-weight: 500; text-align: center; cursor: pointer; border: none; background: transparent; color: var(--text3); font-family: var(--font-display); letter-spacing: 0.06em; transition: color 0.15s; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.sp-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.sp-tab:hover:not(.active) { color: var(--text2); }
+.sp-panel { padding: 10px 8px; overflow-y: auto; }
+.sp-panel::-webkit-scrollbar { display: none; }
+.sp-panel.hidden { display: none; }
+.sp-prompts-head { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); padding: 0 8px 8px; font-weight: 500; font-family: var(--font-display); }
 .prompt-chip { display: block; width: 100%; text-align: left; padding: 7px 10px; border-radius: 7px; margin-bottom: 3px; background: transparent; border: 1px solid var(--border); color: var(--text2); font-size: 12px; cursor: pointer; font-family: var(--font-body); transition: all 0.15s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .prompt-chip:hover { background: var(--accent-soft); border-color: var(--border2); color: var(--text); }
+.lp-step { display: flex; align-items: flex-start; gap: 8px; padding: 7px 8px; border-radius: 7px; cursor: pointer; border: 1px solid transparent; margin-bottom: 3px; transition: all 0.15s; }
+.lp-step:hover { background: var(--accent-soft); border-color: var(--border2); }
+.lp-step.done { opacity: 0.55; }
+.lp-num { font-size: 10px; font-family: var(--font-mono); color: var(--text3); flex-shrink: 0; padding-top: 1px; min-width: 18px; }
+.lp-step.done .lp-num { color: var(--accent); }
+.lp-text { font-size: 12px; color: var(--text2); line-height: 1.4; flex: 1; }
+.lp-step:hover .lp-text { color: var(--text); }
+.lp-progress { margin: 6px 8px 2px; }
+.lp-progress-bar { height: 3px; border-radius: 2px; background: var(--border); overflow: hidden; margin-bottom: 5px; }
+.lp-progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s; }
+.lp-progress-label { font-size: 10px; color: var(--text3); font-family: var(--font-mono); }
 
 /* Main */
-#main { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: rgba(5,48,87,0.48); overflow: hidden; }
-#trace-bar { height: 36px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; gap: 6px; background: rgba(3,17,20,0.72); overflow-x: auto; flex-shrink: 0; }
+#main { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--bg-panel); overflow: hidden; }
+#trace-bar { height: 36px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; gap: 6px; background: var(--bg); overflow-x: auto; flex-shrink: 0; }
 #trace-bar::-webkit-scrollbar { display: none; }
 .trace-empty { font-size: 11px; color: var(--text3); }
 .trace-tag { padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; border: 1px solid var(--border2); }
@@ -115,31 +174,31 @@ html, body {
 #chat::-webkit-scrollbar { width: 3px; }
 #chat::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
 
-.msg-user { align-self: flex-end; max-width: 65%; background: rgba(29,244,244,0.12); border: 1px solid var(--border2); border-radius: 16px 16px 4px 16px; padding: 10px 14px; font-size: 14px; line-height: 1.55; }
+.msg-user { align-self: flex-end; max-width: 65%; background: var(--accent-soft); border: 1px solid var(--border2); border-radius: 16px 16px 4px 16px; padding: 10px 14px; font-size: 14px; line-height: 1.55; }
 .msg-agent { align-self: flex-start; width: 100%; }
 .msg-agent-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .msg-agent-tag { padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; border: 1px solid var(--border2); }
 .msg-agent-time { font-size: 11px; color: var(--text3); }
-.msg-agent-bubble { background: rgba(5,48,87,0.56); border: 1px solid var(--border); border-radius: 4px 16px 16px 16px; padding: 14px 16px; font-size: 14px; line-height: 1.65; backdrop-filter: blur(10px); }
-.msg-agent-orch .msg-agent-bubble { background: rgba(162,243,243,0.08); border-color: rgba(162,243,243,0.28); color: var(--accent-pale); font-style: italic; }
+.msg-agent-bubble { background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px 16px 16px 16px; padding: 14px 16px; font-size: 14px; line-height: 1.65; }
+.msg-agent-orch .msg-agent-bubble { background: var(--bg-orch-bubble); border-color: var(--border-orch); color: var(--accent-pale); font-style: italic; }
 .msg-agent-bubble p { margin-bottom: 10px; }
 .msg-agent-bubble p:last-child { margin-bottom: 0; }
 .msg-agent-bubble strong { color: var(--accent-pale); font-weight: 500; }
 .msg-agent-bubble em { color: var(--text2); font-style: italic; }
-.msg-agent-bubble pre { background: rgba(3,17,20,0.88); border: 1px solid var(--border2); border-radius: 8px; padding: 12px 14px; margin: 10px 0; font-family: var(--font-mono); font-size: 12px; line-height: 1.6; overflow-x: auto; color: var(--accent-pale); white-space: pre-wrap; }
-.msg-agent-bubble code { font-family: var(--font-mono); font-size: 12px; background: rgba(29,244,244,0.12); padding: 1px 5px; border-radius: 4px; color: var(--accent); }
+.msg-agent-bubble pre { background: var(--bg); border: 1px solid var(--border2); border-radius: 8px; padding: 12px 14px; margin: 10px 0; font-family: var(--font-mono); font-size: 12px; line-height: 1.6; overflow-x: auto; color: var(--accent-pale); white-space: pre-wrap; }
+.msg-agent-bubble code { font-family: var(--font-mono); font-size: 12px; background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; color: var(--accent); }
 .msg-agent-bubble ul, .msg-agent-bubble ol { padding-left: 18px; margin: 8px 0; }
 .msg-agent-bubble li { margin-bottom: 4px; line-height: 1.55; }
 .msg-agent-bubble h4 { font-size: 13px; font-weight: 500; color: var(--text); margin: 12px 0 6px; font-family: var(--font-display); letter-spacing: 0.02em; }
 
-.viz-frame { margin: 4px 0; background: rgba(3,17,20,0.88); border: 1px solid var(--border2); border-radius: 8px; overflow: hidden; }
+.viz-frame { margin: 4px 0; background: var(--bg); border: 1px solid var(--border2); border-radius: 8px; overflow: hidden; }
 .viz-frame svg { display: block; width: 100%; }
 .viz-frame text { font-size: 8px; }
 .viz-fallback { font-size: 12px; color: var(--text2); }
-.scribe-doc { background: rgba(3,17,20,0.88); border: 1px solid var(--border2); border-radius: 8px; padding: 16px; font-family: var(--font-mono); font-size: 12px; line-height: 1.7; color: var(--text2); white-space: pre-wrap; overflow-x: auto; margin: 4px 0; }
+.scribe-doc { background: var(--bg); border: 1px solid var(--border2); border-radius: 8px; padding: 16px; font-family: var(--font-mono); font-size: 12px; line-height: 1.7; color: var(--text2); white-space: pre-wrap; overflow-x: auto; margin: 4px 0; }
 
 .thinking-msg { align-self: flex-start; }
-.thinking-dots { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: rgba(5,48,87,0.56); border-radius: 4px 16px 16px 16px; border: 1px solid var(--border); }
+.thinking-dots { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--bg-card); border-radius: 4px 16px 16px 16px; border: 1px solid var(--border); }
 .thinking-label { font-size: 12px; color: var(--text3); }
 .dot-pulse span { display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: var(--text3); margin: 0 1px; animation: dotpulse 1.2s infinite; }
 .dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
@@ -147,14 +206,14 @@ html, body {
 @keyframes dotpulse { 0%,80%,100%{opacity:0.2;transform:scale(0.8)} 40%{opacity:1;transform:scale(1)} }
 
 /* Right panel */
-#rightpanel { border-left: 1px solid var(--border); background: rgba(3,17,20,0.78); backdrop-filter: blur(12px); display: flex; flex-direction: column; overflow: hidden; }
+#rightpanel { border-left: 1px solid var(--border); background: var(--bg); display: flex; flex-direction: column; overflow: hidden; }
 #rp-head { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
 #rp-head h3 { font-size: 10px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text3); font-family: var(--font-display); }
 #rp-body { flex: 1; overflow-y: auto; padding: 12px; -webkit-overflow-scrolling: touch; }
 #rp-body::-webkit-scrollbar { display: none; }
 .rp-section { margin-bottom: 20px; }
 .rp-section h4 { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 8px; font-family: var(--font-display); }
-.flow-card { background: rgba(5,48,87,0.56); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 6px; display: flex; align-items: flex-start; gap: 8px; }
+.flow-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 6px; display: flex; align-items: flex-start; gap: 8px; }
 .flow-num { font-size: 10px; font-weight: 500; color: var(--text3); min-width: 14px; margin-top: 1px; }
 .flow-text { font-size: 12px; color: var(--text2); line-height: 1.5; }
 .flow-text strong { color: var(--text); font-weight: 500; }
@@ -164,8 +223,8 @@ html, body {
 .stat-value { font-size: 12px; font-weight: 500; color: var(--text); font-family: var(--font-mono); }
 
 /* Input */
-#inputbar { grid-column: 1/-1; border-top: 1px solid var(--border); background: rgba(3,17,20,0.84); padding: 12px 20px; display: flex; gap: 10px; align-items: flex-end; backdrop-filter: blur(14px); }
-#user-input { flex: 1; background: rgba(5,48,87,0.56); border: 1px solid var(--border2); border-radius: 12px; padding: 10px 14px; color: var(--text); font-family: var(--font-body); font-size: 14px; resize: none; min-height: 44px; max-height: 120px; line-height: 1.5; transition: border-color 0.15s; }
+#inputbar { grid-column: 1/-1; border-top: 1px solid var(--border); background: var(--bg); padding: 12px 20px; display: flex; gap: 10px; align-items: flex-end; }
+#user-input { flex: 1; background: var(--bg-input); border: 1px solid var(--border2); border-radius: 12px; padding: 10px 14px; color: var(--text); font-family: var(--font-body); font-size: 14px; resize: none; min-height: 44px; max-height: 120px; line-height: 1.5; transition: border-color 0.15s; }
 #user-input:focus { outline: none; border-color: var(--accent); }
 #user-input::placeholder { color: var(--text3); }
 #send-btn { padding: 10px 18px; border-radius: 12px; background: var(--accent); border: none; color: var(--bg); font-family: var(--font-body); font-size: 14px; font-weight: 500; cursor: pointer; transition: opacity 0.15s; }
@@ -182,6 +241,7 @@ html, body {
 .tag-mcp     { color: var(--c-mcp);     border-color: rgba(162,243,243,0.24); background: rgba(162,243,243,0.08); }
 .tag-deploy  { color: var(--c-deploy);  border-color: rgba(29,244,244,0.24);  background: rgba(29,244,244,0.08); }
 .tag-scribe  { color: var(--c-scribe);  border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); }
+.tag-system  { color: #f5a623;          border-color: rgba(245,166,35,0.35);  background: rgba(245,166,35,0.10); }
 </style>
 </head>
 <body>
@@ -200,6 +260,7 @@ html, body {
           Use Generate Cheat Sheet any time to export a summary of what you explored.
         </div>
       </div>
+      <button class="pill-btn" id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">☀</button>
       <button class="pill-btn" onclick="clearSession()">Clear</button>
       <button class="pill-btn" id="download-scribe-btn" onclick="downloadScribe()" disabled>Download Cheat Sheet PDF</button>
       <button class="pill-btn primary" id="scribe-btn" onclick="generateScribe()">Generate Cheat Sheet ↗</button>
@@ -234,23 +295,36 @@ html, body {
       </div>
       <div class="agent-row" id="row-mcp">
         <div class="agent-icon" style="background:rgba(162,243,243,0.08);color:var(--c-mcp)">⬡</div>
-        <div class="agent-info"><div class="agent-name">MCP</div><div class="agent-desc">Tools, connectors, protocol design</div></div>
+        <div class="agent-info"><div class="agent-name">Tools & APIs</div><div class="agent-desc">Tool calling, MCP, integrations</div></div>
         <div class="agent-status-dot"></div>
       </div>
       <div class="agent-row" id="row-deploy">
         <div class="agent-icon" style="background:rgba(29,244,244,0.08);color:var(--c-deploy)">↑</div>
-        <div class="agent-info"><div class="agent-name">Deploy</div><div class="agent-desc">Production, reliability, operations</div></div>
+        <div class="agent-info"><div class="agent-name">Production & Ops</div><div class="agent-desc">Evals, hosting, reliability, cost</div></div>
         <div class="agent-status-dot"></div>
       </div>
     </div>
     <div id="sidebar-prompts">
-      <h4>Quick prompts</h4>
-      <button class="prompt-chip" onclick="quickSend('What is an AI agent and how does it differ from a regular LLM call?')">What is an AI agent?</button>
-      <button class="prompt-chip" onclick="quickSend('Show me how to code an orchestrator agent in Python')">Build an orchestrator</button>
-      <button class="prompt-chip" onclick="quickSend('What are the top best practices when building agents?')">Best practices</button>
-      <button class="prompt-chip" onclick="quickSend('Explain MCP and why it matters for agents')">Explain MCP</button>
-      <button class="prompt-chip" onclick="quickSend('How do I deploy an agent to production?')">Production deployment</button>
-      <button class="prompt-chip" onclick="quickSend('What is the difference between tool calling and function calling?')">Tool vs function calling</button>
+      <div class="sp-tabs">
+        <button class="sp-tab active" id="tab-prompts" onclick="switchSidebarTab('prompts')">Quick Prompts</button>
+        <button class="sp-tab" id="tab-path" onclick="switchSidebarTab('path')">Learning Path</button>
+      </div>
+      <div class="sp-panel" id="panel-prompts">
+        <div class="sp-prompts-head">Start here</div>
+        <button class="prompt-chip" onclick="quickSend('What is an AI agent and how does it differ from a regular LLM call?')">What is an AI agent?</button>
+        <button class="prompt-chip" onclick="quickSend('Show me how to code an orchestrator agent in Python')">Build an orchestrator</button>
+        <button class="prompt-chip" onclick="quickSend('What are the top best practices when building agents?')">Best practices</button>
+        <button class="prompt-chip" onclick="quickSend('How does tool calling work in AI agents?')">Tool calling</button>
+        <button class="prompt-chip" onclick="quickSend('How do I take an AI agent from prototype to production?')">Prototype to production</button>
+        <button class="prompt-chip" onclick="quickSend('What is the difference between tool calling and function calling?')">Tool vs function calling</button>
+      </div>
+      <div class="sp-panel hidden" id="panel-path">
+        <div class="lp-progress">
+          <div class="lp-progress-bar"><div class="lp-progress-fill" id="lp-fill" style="width:0%"></div></div>
+          <div class="lp-progress-label" id="lp-label">0 / 9 topics explored</div>
+        </div>
+        <div id="lp-steps"></div>
+      </div>
     </div>
   </aside>
 
@@ -297,14 +371,14 @@ html, body {
           <line x1="190" y1="148" x2="165" y2="148" stroke="rgba(240,155,94,0.3)" stroke-width="1"/>
           <rect x="55" y="136" width="110" height="24" rx="6" fill="rgba(240,155,94,0.07)" stroke="rgba(240,155,94,0.2)" stroke-width="1"/>
           <text x="110" y="152" text-anchor="middle" fill="#ffffff" font-size="10" font-family="Montserrat">Best Practices</text>
-          <!-- MCP -->
+          <!-- Tools & APIs -->
           <line x1="30" y1="184" x2="55" y2="184" stroke="rgba(208,107,240,0.3)" stroke-width="1"/>
           <rect x="55" y="172" width="110" height="24" rx="6" fill="rgba(208,107,240,0.07)" stroke="rgba(208,107,240,0.2)" stroke-width="1"/>
-          <text x="110" y="188" text-anchor="middle" fill="#a2f3f3" font-size="10" font-family="Montserrat">MCP</text>
-          <!-- Deploy -->
+          <text x="110" y="188" text-anchor="middle" fill="#a2f3f3" font-size="10" font-family="Montserrat">Tools &amp; APIs</text>
+          <!-- Production & Ops -->
           <line x1="190" y1="220" x2="165" y2="220" stroke="rgba(94,170,240,0.3)" stroke-width="1"/>
           <rect x="55" y="208" width="110" height="24" rx="6" fill="rgba(94,170,240,0.07)" stroke="rgba(94,170,240,0.2)" stroke-width="1"/>
-          <text x="110" y="224" text-anchor="middle" fill="#1df4f4" font-size="10" font-family="Montserrat">Deploy</text>
+          <text x="110" y="224" text-anchor="middle" fill="#1df4f4" font-size="10" font-family="Montserrat">Production &amp; Ops</text>
           <!-- Scribe -->
           <line x1="30" y1="256" x2="55" y2="256" stroke="rgba(240,94,138,0.3)" stroke-width="1"/>
           <rect x="55" y="244" width="110" height="24" rx="6" fill="rgba(240,94,138,0.07)" stroke="rgba(240,94,138,0.2)" stroke-width="1"/>
@@ -344,9 +418,10 @@ const AGENT_META = {
   viz:     { label: 'Visual',       tag: 'tag-viz' },
   code:    { label: 'Code',         tag: 'tag-code' },
   bp:      { label: 'Best Practices', tag: 'tag-bp' },
-  mcp:     { label: 'MCP',          tag: 'tag-mcp' },
-  deploy:  { label: 'Deploy',       tag: 'tag-deploy' },
+  mcp:     { label: 'Tools & APIs',     tag: 'tag-mcp' },
+  deploy:  { label: 'Production & Ops', tag: 'tag-deploy' },
   scribe:  { label: 'Scribe',       tag: 'tag-scribe' },
+  system:  { label: 'Out of Scope', tag: 'tag-system' },
 };
 const SELECTABLE_AGENTS = ['concept', 'viz', 'code', 'bp', 'mcp', 'deploy'];
 
@@ -808,6 +883,8 @@ function addAgentMsg(agentKey, content, isViz) {
   } else if (agentKey === 'scribe') {
     const safe = content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     body = `<div class="scribe-doc">${safe}</div>`;
+  } else if (agentKey === 'system') {
+    body = formatContent(content);
   } else {
     body = formatContent(content);
   }
@@ -855,11 +932,14 @@ async function handleSend() {
     removeThinking(orchThink);
     fireRow('orch', false);
 
-    setTrace(routing, routing.agents || []);
-    addAgentMsg('orch', buildOrchestratorMessage(routing), false);
-    for (const agentKey of (routing.agents || [])) {
-      fireRow(agentKey, true);
-      thinkIds[agentKey] = addThinking(agentKey);
+    // Skip orchestrator message and agent spinners entirely for off-topic questions
+    if (!routing.off_topic) {
+      setTrace(routing, routing.agents || []);
+      addAgentMsg('orch', buildOrchestratorMessage(routing), false);
+      for (const agentKey of (routing.agents || [])) {
+        fireRow(agentKey, true);
+        thinkIds[agentKey] = addThinking(agentKey);
+      }
     }
 
     const res = await fetch('/api/chat', {
@@ -947,6 +1027,94 @@ function quickSend(text) {
   document.getElementById('user-input').value = text;
   handleSend();
 }
+
+// ── Theme toggle ─────────────────────────────────────────────────────────────
+
+function toggleTheme() {
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  if (isLight) {
+    document.documentElement.removeAttribute('data-theme');
+    localStorage.setItem('agent101_theme', 'dark');
+    document.getElementById('theme-toggle').textContent = '☀';
+  } else {
+    document.documentElement.setAttribute('data-theme', 'light');
+    localStorage.setItem('agent101_theme', 'light');
+    document.getElementById('theme-toggle').textContent = '☾';
+  }
+}
+
+(function initThemeButton() {
+  const saved = localStorage.getItem('agent101_theme');
+  const btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = saved === 'light' ? '☾' : '☀';
+})();
+
+// ── Learning Path ────────────────────────────────────────────────────────────
+
+const LEARNING_PATH = [
+  { id: 'lp1', label: 'What is an AI agent?',            prompt: 'What is an AI agent and how does it differ from a regular LLM call? Explain with an example.' },
+  { id: 'lp2', label: 'How agents reason & plan',        prompt: 'How does an AI agent reason and plan its steps? Explain chain-of-thought, ReAct, and planning loops.' },
+  { id: 'lp3', label: 'Memory & context',                prompt: 'How do AI agents manage memory and context? Explain short-term, long-term, and external memory.' },
+  { id: 'lp4', label: 'Tool calling explained',          prompt: 'How does tool calling work in AI agents? Walk me through the full loop from user request to tool result.' },
+  { id: 'lp5', label: 'Multi-agent systems',             prompt: 'What are multi-agent systems? Explain orchestrator-worker patterns and when to use them.' },
+  { id: 'lp6', label: 'Building your first agent',       prompt: 'Show me how to build a simple AI agent in Python from scratch with tool calling.' },
+  { id: 'lp7', label: 'Best practices & pitfalls',       prompt: 'What are the most important best practices and common pitfalls when building production AI agents?' },
+  { id: 'lp8', label: 'Tools, MCP & integrations',       prompt: 'How do agents connect to external tools and services? Explain MCP, function calling schemas, and integration patterns.' },
+  { id: 'lp9', label: 'Prototype to production',         prompt: 'What does it take to go from a working agent prototype to a reliable production system? Cover evals, observability, and ops.' },
+];
+const LP_STORAGE_KEY = 'agent101_lp_done';
+
+function lpGetDone() {
+  try { return new Set(JSON.parse(localStorage.getItem(LP_STORAGE_KEY) || '[]')); }
+  catch { return new Set(); }
+}
+
+function lpSetDone(set) {
+  try { localStorage.setItem(LP_STORAGE_KEY, JSON.stringify([...set])); } catch {}
+}
+
+function lpMarkDone(id) {
+  const done = lpGetDone();
+  done.add(id);
+  lpSetDone(done);
+  lpRender();
+}
+
+function lpRender() {
+  const done = lpGetDone();
+  const container = document.getElementById('lp-steps');
+  if (!container) return;
+  container.innerHTML = LEARNING_PATH.map(step => {
+    const isDone = done.has(step.id);
+    return `<div class="lp-step${isDone ? ' done' : ''}" onclick="lpSend('${step.id}')">
+      <span class="lp-num">${isDone ? '✓' : LEARNING_PATH.indexOf(step) + 1}</span>
+      <span class="lp-text">${step.label}</span>
+    </div>`;
+  }).join('');
+  const count = done.size;
+  const total = LEARNING_PATH.length;
+  const fill = document.getElementById('lp-fill');
+  const label = document.getElementById('lp-label');
+  if (fill) fill.style.width = `${Math.round((count / total) * 100)}%`;
+  if (label) label.textContent = `${count} / ${total} topics explored`;
+}
+
+function lpSend(id) {
+  const step = LEARNING_PATH.find(s => s.id === id);
+  if (!step) return;
+  lpMarkDone(id);
+  document.getElementById('user-input').value = step.prompt;
+  handleSend();
+}
+
+function switchSidebarTab(tab) {
+  document.getElementById('panel-prompts').classList.toggle('hidden', tab !== 'prompts');
+  document.getElementById('panel-path').classList.toggle('hidden', tab !== 'path');
+  document.getElementById('tab-prompts').classList.toggle('active', tab === 'prompts');
+  document.getElementById('tab-path').classList.toggle('active', tab === 'path');
+}
+
+lpRender();
 
 // Auto-resize textarea
 const textarea = document.getElementById('user-input');

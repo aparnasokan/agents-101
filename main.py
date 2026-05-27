@@ -257,15 +257,17 @@ def _visual_subject(user_message: str) -> str:
 
 
 def _visual_title(user_message: str, concept_content: str, style: str) -> str:
+    sentences = _concept_sentences(concept_content, limit=1)
+    if sentences:
+        title = _clean_visual_text(sentences[0])[:72]
+        if title:
+            if style == "workflow":
+                return f"{title} — Workflow"
+            return title
     subject = _visual_subject(user_message)
     if style == "workflow":
         return f"{subject.title()} Workflow" if subject else "How It Works"
-    if subject:
-        return subject.title()
-    sentences = _concept_sentences(concept_content, limit=1)
-    if sentences:
-        return _clean_visual_text(sentences[0])[:48]
-    return "Agent Concept"
+    return subject.title() if subject else "Agent Concept"
 
 
 def _workflow_visual_points(user_message: str, concept_content: str) -> list[tuple[str, str]]:
@@ -298,10 +300,10 @@ def build_viz_messages(user_message: str, concept_content: str) -> list[dict]:
     if style == "workflow":
         bullet_source = _workflow_visual_points(user_message, concept_content)
     else:
-        bullet_source = visual_items or [("", sentence) for sentence in sentences[:4]]
+        bullet_source = visual_items or [("", sentence) for sentence in sentences]
     bullet_points = "\n".join(
         f"- {label}: {_clean_visual_text(body)}" if label else f"- {_clean_visual_text(body)}"
-        for label, body in bullet_source[:4]
+        for label, body in bullet_source
         if body
     ) or "- Explain the core concept clearly"
     brief = (
@@ -328,11 +330,11 @@ def build_manual_viz_messages(user_message: str) -> list[dict]:
     if style == "workflow":
         bullet_source = _workflow_visual_points(prompt, prompt)
     else:
-        bullet_source = [("", _clean_visual_text(sentence)) for sentence in _concept_sentences(prompt, limit=4)]
+        bullet_source = [("", _clean_visual_text(sentence)) for sentence in _concept_sentences(prompt, limit=8)]
 
     bullet_points = "\n".join(
         f"- {label}: {_clean_visual_text(body)}" if label else f"- {_clean_visual_text(body)}"
-        for label, body in bullet_source[:4]
+        for label, body in bullet_source
         if body
     ) or "- Explain the core concept clearly"
 
@@ -349,40 +351,61 @@ def build_manual_viz_messages(user_message: str) -> list[dict]:
     ]
 
 
+AGENT_PERSPECTIVE_HINTS = {
+    "concept": (
+        "Answer this question as a concept explainer for people learning about AI agents. "
+        "Start with a clear 1-2 sentence definition or direct answer, then explain the idea — "
+        "how it works, why it matters, and a concrete example. Do not provide code. "
+        "Max 300 words. Always finish every sentence and section you begin — "
+        "if running long, write one closing sentence and stop rather than starting a new section."
+    ),
+    "code": (
+        "Answer this question from a code and implementation perspective. "
+        "Start with a 1-2 sentence overview, then show pseudocode or working code as the main output. "
+        "Keep code under 40 lines and the surrounding text under 150 words. "
+        "Always finish every sentence and every code block you begin — never cut off mid-function or mid-comment."
+    ),
+    "bp": (
+        "Answer this question from a best practices perspective. "
+        "Give 3-4 DO/DON'T pairs followed by one Golden Rule. Max 300 words. "
+        "Always complete every pair and the Golden Rule fully — never leave a line half-written."
+    ),
+    "mcp": (
+        "Answer this question from a tools, APIs, and integrations perspective. "
+        "Start with a 1-2 sentence overview, then focus on tool calling, MCP, function schemas, or external APIs. "
+        "Max 300 words. Always finish every sentence and section you begin — "
+        "if running long, write one closing sentence and stop rather than starting a new heading."
+    ),
+    "deploy": (
+        "Answer this question from a production and operations perspective. "
+        "Start with a 1-2 sentence framing, then cover production concerns: "
+        "evals, observability, hosting, reliability, cost, safety, and scaling. "
+        "Max 300 words. Always finish every sentence and section — "
+        "if running long, write one closing sentence and stop rather than starting a new checklist."
+    ),
+    "scribe": (
+        "Summarise this topic clearly and concisely as a structured reference. "
+        "Use headers, bullet points, and short explanations. Focus on what a learner would want to remember. "
+        "Always complete every section you begin — never leave a heading without content."
+    ),
+}
+
+
 def build_manual_agent_messages(agent_key: str, user_message: str, history: list[dict]) -> list[dict]:
     prompt = user_message.strip()
-
-    if agent_key == "concept":
-        return [
-            *history,
-            {
-                "role": "user",
-                "content": (
-                    f"Explain this as an agent design concept for beginners: {prompt}\n\n"
-                    "Focus on how it could work as a single-agent system or a multi-agent system. "
-                    "Do not provide code. Explain the architecture, flow, and responsibilities."
-                ),
-            },
-        ]
-
-    if agent_key == "code":
-        return [
-            *history,
-            {
-                "role": "user",
-                "content": (
-                    f"For this idea, provide pseudocode first: {prompt}\n\n"
-                    "Keep code or pseudocode as the primary output. Prefer pseudocode over real code unless the user explicitly asks for implementation code."
-                ),
-            },
-        ]
 
     if agent_key == "viz":
         return build_manual_viz_messages(prompt)
 
+    hint = AGENT_PERSPECTIVE_HINTS.get(agent_key, "")
+    if hint:
+        framed_content = f"{hint}\n\nQuestion: {prompt}"
+    else:
+        framed_content = prompt
+
     return [
         *history,
-        {"role": "user", "content": prompt},
+        {"role": "user", "content": framed_content},
     ]
 
 
@@ -434,6 +457,16 @@ def _routing_thinking(raw_thinking: object, reason: str, topic: str, agents: lis
 
 def finalize_routing(routing: dict | None, manual_selection: bool = False) -> dict:
     routing = dict(routing or {})
+
+    # Short-circuit for off-topic: don't normalize agents or build a routing message
+    if routing.get("off_topic"):
+        routing["agents"] = []
+        routing.setdefault("reason", "Question is not related to AI agents or agentic workflows")
+        routing.setdefault("topic", "")
+        routing["thinking"] = ""
+        routing["decision_steps"] = []
+        return routing
+
     routing["agents"] = normalize_agents(
         routing.get("agents", ["concept"]),
         enforce_pairs=not manual_selection,
@@ -507,9 +540,55 @@ async def run_pipeline(user_message: str, routing: dict | None = None) -> ChatRe
     session.add_user_message(user_message)
     history = session.get_recent_history(turns=6)
 
+    # Guardrail: always check topic relevance first — covers both auto and manual-override paths
+    loop = asyncio.get_event_loop()
+    if await loop.run_in_executor(None, lambda: orchestrator.is_off_topic(user_message)):
+        off_topic_routing = {
+            "agents": [],
+            "reason": "Question is not related to AI agents or agentic workflows",
+            "topic": "",
+            "off_topic": True,
+        }
+        off_topic_msg = (
+            "That question falls outside what I can help with here.\n\n"
+            "**Agent 101 Learning Studio** is focused exclusively on **AI agents and agentic workflows** — "
+            "topics like how agents are built, how they reason and plan, tool calling, memory, "
+            "orchestration patterns, RAG, multi-agent systems, and deploying agents to production.\n\n"
+            "Try asking something like:\n"
+            "- *What is an AI agent?*\n"
+            "- *How does tool calling work?*\n"
+            "- *What's the difference between RAG and fine-tuning?*\n"
+            "- *How do I make an agent reliable in production?*"
+        )
+        return ChatResponse(
+            routing=off_topic_routing,
+            responses=[AgentResponse(agent="system", content=off_topic_msg)],
+            stats={"off_topic": True},
+        )
+
     # Step 1: Orchestrate
     routing = routing or get_routing(user_message)
     routing = finalize_routing(routing, manual_selection=routing.get("manual_selection", False))
+
+    # Secondary guardrail: catch off_topic flag from orchestrator routing (auto-routing path)
+    if routing.get("off_topic"):
+        off_topic_msg = (
+            "That question falls outside what I can help with here.\n\n"
+            "**Agent 101 Learning Studio** is focused exclusively on **AI agents and agentic workflows** — "
+            "topics like how agents are built, how they reason and plan, tool calling, memory, "
+            "orchestration patterns, RAG, multi-agent systems, and deploying agents to production.\n\n"
+            "Try asking something like:\n"
+            "- *What is an AI agent?*\n"
+            "- *How does tool calling work?*\n"
+            "- *What's the difference between RAG and fine-tuning?*\n"
+            "- *How do I make an agent reliable in production?*"
+        )
+        return ChatResponse(
+            routing=routing,
+            responses=[AgentResponse(agent="system", content=off_topic_msg)],
+            stats={"off_topic": True},
+        )
+
     agents_to_fire = routing["agents"]
     topic = routing.get("topic", "")
     routing["agents"] = agents_to_fire

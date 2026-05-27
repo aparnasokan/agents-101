@@ -66,9 +66,9 @@ class VizAgent(BaseAgent):
             plain = self._plain_text(source_text) or "Agent concept"
             parts = [part.strip() for part in re.split(r"(?<=[.!?])\s+", plain) if part.strip()]
             return {
-                "title": (parts[0] if parts else plain)[:42],
+                "title": (parts[0] if parts else plain)[:80],
                 "style": "sequence",
-                "points": parts[:4] if parts else [plain],
+                "points": parts[:8] if parts else [plain],
             }
 
         title_match = re.search(r"^Title:\s*(.+)$", source_text, re.MULTILINE)
@@ -80,9 +80,9 @@ class VizAgent(BaseAgent):
         if not points:
             points = [title]
         return {
-            "title": title[:42],
+            "title": title[:80],
             "style": style,
-            "points": points[:4],
+            "points": points[:8],
         }
 
     def _plain_text(self, text: str) -> str:
@@ -129,11 +129,11 @@ class VizAgent(BaseAgent):
             return fallback
         if ":" in cleaned:
             maybe_label, remainder = cleaned.split(":", 1)
-            if len(maybe_label.strip()) <= 24 and len(remainder.strip()) >= 8:
-                return maybe_label.strip()[:20]
-        words = cleaned.split()[:3]
+            if len(maybe_label.strip()) <= 40 and len(remainder.strip()) >= 8:
+                return maybe_label.strip()[:36]
+        words = cleaned.split()[:5]
         label = " ".join(words).rstrip(".,:;")
-        return label[:20] or fallback
+        return label[:36] or fallback
 
     def _split_point(self, text: str, fallback_label: str) -> tuple[str, str]:
         cleaned = self._clean_point(text)
@@ -142,7 +142,7 @@ class VizAgent(BaseAgent):
             maybe_label = maybe_label.strip()
             remainder = remainder.strip()
             if maybe_label and remainder:
-                label = maybe_label[:24]
+                label = maybe_label[:40]
                 return label, self._strip_heading_prefix(remainder, label)
         return fallback_label, self._strip_heading_prefix(cleaned, fallback_label)
 
@@ -189,18 +189,20 @@ class VizAgent(BaseAgent):
         )
 
     def _concept_grid_svg(self, title: str, points: list[str]) -> tuple[str, int]:
-        labels_and_colors = [
-            ("Definition", PRIMARY),
-            ("Analogy", SECONDARY),
-            ("Mechanics", SECONDARY),
-            ("Why it matters", PRIMARY),
+        fallback_labels = [
+            "Definition", "Analogy", "Mechanics", "Why it matters",
+            "Key insight", "Example", "Trade-offs", "Summary",
         ]
-        points = (points + ["", "", "", ""])[:4]
+        colors_cycle = [PRIMARY, SECONDARY, SECONDARY, PRIMARY, PRIMARY, SECONDARY, SECONDARY, PRIMARY]
+        n = max(len(points), 1)
+        points = (points + [""] * n)[:n]
         y = 36
         parts = []
         bottoms: list[int] = []
-        for idx, (fallback_label, color) in enumerate(labels_and_colors):
-            label, body = self._split_point(points[idx], fallback_label)
+        for idx, point in enumerate(points):
+            fallback_label = fallback_labels[idx % len(fallback_labels)]
+            color = colors_cycle[idx % len(colors_cycle)]
+            label, body = self._split_point(point, fallback_label)
             lines = self._wrap_text(body, width=62)
             height = max(54, 28 + self._text_block_height(lines) + 16)
             fill = PRIMARY_FILL if color == PRIMARY else SECONDARY_FILL

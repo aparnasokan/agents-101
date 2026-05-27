@@ -62,6 +62,6 @@ class ScribeAgent(BaseAgent):
         )
         result = self.run(
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=2048,
+            max_tokens=3500,
         )
         return self._clean_sections(result)

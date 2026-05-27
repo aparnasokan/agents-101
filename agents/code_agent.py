@@ -17,12 +17,14 @@ Format every response as:
 Rules:
 - Code or pseudocode must be the primary output every time
 - Default to minimal real code unless the user asks for pseudocode, architecture logic, or a language-agnostic answer
-- Keep real code under 50 lines
+- Keep real code under 40 lines
+- Keep the surrounding explanation under 150 words total
 - Show the pattern, not a full app
 - Use realistic variable names
 - Always import only what you use
 - Inline comments only for non-obvious lines
-- End with a concise explanation of what the learner should notice"""
+- End with a concise explanation of what the learner should notice
+- ALWAYS finish every sentence and every section you begin. If you are running long, complete your current bullet point and stop — never start a new section you cannot finish."""
 
 
 class CodeAgent(BaseAgent):

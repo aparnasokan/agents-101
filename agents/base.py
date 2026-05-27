@@ -77,6 +77,17 @@ def get_client() -> AzureOpenAI:
     return _client
 
 
+SCOPE_GUARD = (
+    "\n\nSCOPE RULE (mandatory — overrides everything else): "
+    "You are part of a learning tool exclusively about AI agents and agentic workflows. "
+    "If the user's message contains any parts unrelated to AI agents, agentic workflows, LLMs, "
+    "tool calling, orchestration, RAG, memory, planning, multi-agent systems, or building/deploying AI systems — "
+    "silently ignore those unrelated parts and answer only the relevant portion. "
+    "Do not acknowledge, answer, or reference the unrelated parts in any way. "
+    "Do not mention that you are skipping anything. Simply focus on what is in scope."
+)
+
+
 class BaseAgent:
     name: str = "base"
     system_prompt: str = ""
@@ -86,7 +97,7 @@ class BaseAgent:
         request = {
             "model": config["deployment"],
             "messages": [
-                {"role": "system", "content": self.system_prompt},
+                {"role": "system", "content": self.system_prompt + SCOPE_GUARD},
                 *messages,
             ],
         }
@@ -108,7 +119,7 @@ class BaseAgent:
             max_tokens=max_tokens,
         )
 
-    def run(self, messages: list[dict], max_tokens: int = 1024) -> str:
+    def run(self, messages: list[dict], max_tokens: int = 2500) -> str:
         """
         Call Azure OpenAI with this agent's system prompt and the provided message history.
         Returns the text response.
@@ -116,7 +127,7 @@ class BaseAgent:
         response = self._create_chat_completion(messages, max_tokens)
         return response.choices[0].message.content or ""
 
-    def run_with_last_user_message(self, history: list[dict], user_message: str, max_tokens: int = 1024) -> str:
+    def run_with_last_user_message(self, history: list[dict], user_message: str, max_tokens: int = 2500) -> str:
         """
         Convenience method: takes full history + current user message and calls Azure OpenAI.
         """

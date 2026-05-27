@@ -15,12 +15,13 @@ Structure every response as:
 
 Rules:
 - Bold key terms using **term**
-- Max 250 words
+- Max 300 words total
 - No code blocks (the Code agent handles that)
 - Use *italics* for emphasis on important distinctions
 - Only use an analogy if it genuinely clarifies the concept
 - Prefer grounded, everyday examples over clever analogies
-- If an analogy would be strained or misleading, use a short concrete example instead"""
+- If an analogy would be strained or misleading, use a short concrete example instead
+- ALWAYS finish every sentence and every section you begin. If you are running long, write one closing sentence and stop — never start a new heading or section you cannot complete."""
 
 
 class ConceptAgent(BaseAgent):
