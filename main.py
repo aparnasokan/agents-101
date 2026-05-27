@@ -43,6 +43,7 @@ from agents.best_practices import BestPracticesAgent
 from agents.mcp_agent import McpAgent
 from agents.deploy import DeployAgent
 from agents.scribe import ScribeAgent
+from rag import rag_store
 
 
 def should_auto_open_browser() -> bool:
@@ -391,6 +392,30 @@ AGENT_PERSPECTIVE_HINTS = {
 }
 
 
+
+def build_concept_messages(user_message: str, history: list[dict], manual_selection: bool = False) -> list[dict]:
+    """Build Concept-agent messages with RAG context prepended when available."""
+    if manual_selection:
+        base_messages = build_manual_agent_messages("concept", user_message, history)
+    else:
+        base_messages = history
+
+    try:
+        rag_context = rag_store.build_context_message(user_message)
+    except Exception as exc:
+        print(f"[RAG] Retrieval skipped: {exc}")
+        rag_context = ""
+
+    if not rag_context:
+        print("[RAG] Concept agent running without retrieved context")
+        return base_messages
+
+    print(f"[RAG] Injecting {len(rag_context):,} characters of retrieved context into Concept agent")
+    return [
+        {"role": "system", "content": rag_context},
+        *base_messages,
+    ]
+
 def build_manual_agent_messages(agent_key: str, user_message: str, history: list[dict]) -> list[dict]:
     prompt = user_message.strip()
 
@@ -605,7 +630,7 @@ async def run_pipeline(user_message: str, routing: dict | None = None) -> ChatRe
     concept_task = None
     if concept_requested:
         print("[Pipeline] Firing concept first so viz can support it")
-        concept_messages = build_manual_agent_messages("concept", user_message, history) if manual_selection else history
+        concept_messages = build_concept_messages(user_message, history, manual_selection=manual_selection)
         concept_task = asyncio.create_task(run_agent("concept", concept_messages))
 
     other_tasks = []
@@ -668,6 +693,12 @@ async def lifespan(app: FastAPI):
     print(f"   Agents loaded: {len(AGENTS)}")
     print(f"   Azure deployment: {AZURE_OPENAI_CONFIG['deployment']}")
     print(f"   UI: {local_url}")
+    print("   RAG: enabled" if rag_store.enabled else "   RAG: disabled — set AZURE_OPENAI_EMBEDDING_DEPLOYMENT to enable")
+    if rag_store.enabled:
+        try:
+            rag_store.ensure_ready()
+        except Exception as exc:
+            print(f"   RAG index unavailable: {exc}")
     print("   Browser auto-open: enabled" if should_auto_open_browser() else "   Browser auto-open: disabled")
     print("─" * 40)
     if should_auto_open_browser():
@@ -730,6 +761,17 @@ async def scribe():
     session.record_agents_fired(1)
     return {"content": result, "stats": session.get_stats()}
 
+
+
+@app.post("/api/rag/reindex")
+async def rag_reindex():
+    """Rebuild the local FAISS index after adding/changing workshop or deck files."""
+    try:
+        rebuilt = rag_store.rebuild()
+        return {"rebuilt": rebuilt, "source_dir": str(rag_store.source_dir), "index_dir": str(rag_store.index_dir)}
+    except Exception as e:
+        print(f"[Error] RAG reindex failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/stats")
 async def stats():
