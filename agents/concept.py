@@ -21,7 +21,14 @@ Rules:
 - Only use an analogy if it genuinely clarifies the concept
 - Prefer grounded, everyday examples over clever analogies
 - If an analogy would be strained or misleading, use a short concrete example instead
-- ALWAYS finish every sentence and every section you begin. If you are running long, write one closing sentence and stop — never start a new heading or section you cannot complete."""
+- ALWAYS finish every sentence and every section you begin. If you are running long, write one closing sentence and stop — never start a new heading or section you cannot complete.
+
+Source/citation rules when retrieved context is provided:
+- If the prompt includes numbered retrieved sources like [1], [2], cite retrieved claims inline using those numbers.
+- End with a short **Sources Used** section only when retrieved sources are provided.
+- In **Sources Used**, list only the retrieved sources you actually used.
+- If no retrieved context is provided, do not add a Sources Used section.
+- Do not invent source names, page numbers, URLs, or deck names."""
 
 
 class ConceptAgent(BaseAgent):

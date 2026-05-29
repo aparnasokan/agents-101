@@ -1,0 +1,495 @@
+{
+  "version": "metadata-cache-v2-profile-routing",
+  "embedding_deployment": "text-embedding-3-large",
+  "chunk_size": 1200,
+  "chunk_overlap": 180,
+  "sources_raw": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies;/home/aparnaskn/agents-101/knowledge",
+  "files": [
+    {
+      "path": "/home/aparnaskn/agents-101/knowledge/advanced-rag/LangGraph Overview LangChain Docs.pdf",
+      "size": 379160,
+      "mtime_ns": 1780044264501865093,
+      "sha256": "2ea444166b825b0ba762fe46408f687f91850c3fb573d2cb721c19bf6dabcdeb"
+    },
+    {
+      "path": "/home/aparnaskn/agents-101/knowledge/advanced-rag/Microsoft Research GraphRAG Blog Post.pdf",
+      "size": 258311,
+      "mtime_ns": 1780044436051348640,
+      "sha256": "0be34a05cc4e9a892f0c4bfd490282a279f15b1da4831ae0e9f7016b2be19f84"
+    },
+    {
+      "path": "/home/aparnaskn/agents-101/knowledge/advanced-rag/SelfRag Learning to Retrieve Generate and Critique Through Self Reflection.pdf",
+      "size": 1405127,
+      "mtime_ns": 1780044341485540200,
+      "sha256": "d9eaa1398abac0df67a9d0933a5bf8b6d9d83d2e72da2a486073cd842dd52978"
+    },
+    {
+      "path": "/home/aparnaskn/agents-101/knowledge/foundations/GenerativeAgents Interactive Simulacra of Human Behavior.pdf",
+      "size": 11947867,
+      "mtime_ns": 1780042932223563200,
+      "sha256": "1b31e77fb24d25d7598f2c49e955d12a28b95a6dabad34acdac40f44bfb7a139"
+    },
+    {
+      "path": "/home/aparnaskn/agents-101/knowledge/foundations/ReAct Synergizing Reasoning and Acting in Language Models.pdf",
+      "size": 742910,
+      "mtime_ns": 1779904617116797303,
+      "sha256": "981ff168db406722f62441fb1b49b579fc1ddaa3d538397a46757f40d4198fae"
+    },
+    {
+      "path": "/home/aparnaskn/agents-101/knowledge/foundations/Reflexion Language Agents with Verbal Reinforcement Learning.pdf",
+      "size": 591097,
+      "mtime_ns": 1780042794555196700,
+      "sha256": "6059b6f89fea9959bd3dab553fbb97756a3dfb1b15e3cbab2fbf3ab6664333bd"
+    },
+    {
+      "path": "/home/aparnaskn/agents-101/knowledge/foundations/Toolformer Language Models Can Teach Themselves to Use Tools.pdf",
+      "size": 657966,
+      "mtime_ns": 1780042751950908700,
+      "sha256": "6d7483d94653008e40c2058a1c22441c92e3713dae278b6361e8efc447c99522"
+    },
+    {
+      "path": "/home/aparnaskn/agents-101/knowledge/guides/Anthropic Building Effective Agents.pdf",
+      "size": 752157,
+      "mtime_ns": 1780043810482949585,
+      "sha256": "78aceef14f34343f62527d36e0dcaa4e9b602df706aa2dedad0bf7db7022027a"
+    },
+    {
+      "path": "/home/aparnaskn/agents-101/knowledge/mcp/Model Context Protocol by modelcontext protocolio.pdf",
+      "size": 282510,
+      "mtime_ns": 1780043729937674917,
+      "sha256": "0bf86408312b37e73fceec4d317e6df3a5d17f5f59cba165bb942d7e4bd363e4"
+    },
+    {
+      "path": "/home/aparnaskn/agents-101/knowledge/production/Evaluate agent workflows by OpenAI Developers.pdf",
+      "size": 96714,
+      "mtime_ns": 1780044862505604022,
+      "sha256": "be7ce40925f61ba16a80da543ce5fb4289902444fa8afd91982bce732155a4f0"
+    },
+    {
+      "path": "/home/aparnaskn/agents-101/knowledge/production/Integrations and observability by OpenAI Developers.pdf",
+      "size": 172973,
+      "mtime_ns": 1780044761746164422,
+      "sha256": "f0ac0af8667225b34decd22416004f34bc2c77823c6fd4dbcc2527e53521a5c8"
+    },
+    {
+      "path": "/home/aparnaskn/agents-101/knowledge/production/LlamaIndex Framework.pdf",
+      "size": 216915,
+      "mtime_ns": 1780044388861975884,
+      "sha256": "180db810bc0387a55f23932505c116a3bf0b8b3fff4a747af5b65692bed1f172"
+    },
+    {
+      "path": "/home/aparnaskn/agents-101/knowledge/production/Working with evals by OpenAI Developers.pdf",
+      "size": 388419,
+      "mtime_ns": 1780045013030472793,
+      "sha256": "478176d316d5df5a7a42c85690d912b1b403054163a57e2488049f55f76d0900"
+    },
+    {
+      "path": "/home/aparnaskn/agents-101/knowledge/prompt-eng-context-eng/Prompt Engineering - Claude API Docs.pdf",
+      "size": 720367,
+      "mtime_ns": 1780044632893772028,
+      "sha256": "6ce5f9327d9f02d4efb963c0c7f7770b9a9c4091eb3fb93dc9ed0f66246eb04a"
+    },
+    {
+      "path": "/home/aparnaskn/agents-101/knowledge/prompt-eng-context-eng/Prompt Engineering -- OpenAI Developers.pdf",
+      "size": 338354,
+      "mtime_ns": 1780044690865829705,
+      "sha256": "f09e1ec4a064d027f26d5c13a0e5c03bbef930a5bca3cc365e68adec66e3cbde"
+    },
+    {
+      "path": "/home/aparnaskn/agents-101/knowledge/workshop/Agentic AI 101 \u2014 Foundations Workshop.html",
+      "size": 167351,
+      "mtime_ns": 1779901588532784799,
+      "sha256": "642af060c33a12f8c99f09c1c1ccd7e5e91c7c1dec2590ebe042f3f5dc608381"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/(AWI) Auto What If Model_INEOS_EMEA-32.pptx",
+      "size": 8802241,
+      "mtime_ns": 1771500775000000000,
+      "sha256": "3fe9eb334a0eb53daa0477b762d3f760805a1c5a7054155301572c10cf0574e7"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/AI Agents - Case Study Collection.pptx",
+      "size": 9398631,
+      "mtime_ns": 1772553785000000000,
+      "sha256": "39a0f803c6c37db59ef8db30bc2f97071f32de70fe3dc0c320a4685bb141a42b"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/AI Readiness Assessment_STEM_EMEA-34.pptx",
+      "size": 10243619,
+      "mtime_ns": 1771502358000000000,
+      "sha256": "ac3776b490bb3d299f76a606bf9ea34477e5f4e85b216d44302fe39b17752d4a"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/AI Readiness Assessment_STEM_EMEA-35.pptx",
+      "size": 21093073,
+      "mtime_ns": 1776433872000000000,
+      "sha256": "5574b3d38b63321cf3b5ce8255ff39d619ef61a6106cf180f97d7c674a4de5d8"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/AI Solutions for Demand Forecasting_Cornerstone_(_180)Global Library.pptx",
+      "size": 11120175,
+      "mtime_ns": 1772551333000000000,
+      "sha256": "4bddba698d11347422b596c579f3c6bb9f2b64085e075107af2484eaa2df591a"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/AI-First Personalisation Engine Deployment_Verizon_EMEA-52.pptx",
+      "size": 5817490,
+      "mtime_ns": 1772551638000000000,
+      "sha256": "2a606d7307b253dd3391f0000ffb334a8490b265ce7e0125e892099cff91b8f9"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Aligning a global business under one data taxonomy_Diageo_EMEA-22.pptx",
+      "size": 3879365,
+      "mtime_ns": 1775034098000000000,
+      "sha256": "202a4d16a8cb5faaa95295bd87453702ed4152856f7509381ee69e332c829e3e"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Architectural Review and Databricks Implementation _Citation_EMEA-02.pptx",
+      "size": 3487800,
+      "mtime_ns": 1772530141000000000,
+      "sha256": "9fa0060608ea5ae120696e6968381742f18ac00a2e6d90b18df5caa5df2912ee"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Athlete Performance Dashboard_Sport Scotland_EMEA-16.pptx",
+      "size": 3490117,
+      "mtime_ns": 1772529504000000000,
+      "sha256": "2fe40053426e89421373bd53d92aace21de0c75567bcedfa04946828bee50b93"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Automate Project Management Executive Reporting _Repsol Sinopec_EMEA-24.pptx",
+      "size": 3488194,
+      "mtime_ns": 1772534162000000000,
+      "sha256": "15dad2802d04b8a3f53a71a9da849412bc10a74f55616a4e174e5d56e164413e"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Automation of Manual Transport Processes_Peterson Logistics_EMEA-07.pptx",
+      "size": 8966905,
+      "mtime_ns": 1771940181000000000,
+      "sha256": "3ba3abd11d9243a80f58a1b48ac0547bfcda36bed57b3ea04fcd45e50ca133fd"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Bringing Football Analytics to the Cloud _PSV Eindhoven_EMEA-21.pptx",
+      "size": 3503337,
+      "mtime_ns": 1772529273000000000,
+      "sha256": "2ea5d763d6d649e0c718cd7c079cee3283e7545d6fa15735426d948d86759a79"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Building a roadmap for data-driven process safety & performance reporting_Serica_EMEA-47.pptx",
+      "size": 4053699,
+      "mtime_ns": 1772547764000000000,
+      "sha256": "37c7bfab6e91c64df7e3e76bc4b00797a7dc6678a9be010daea8ec54d983eafc"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/CDH-Powered Personalisation Transformation_Carters_EMEA-53.pptx",
+      "size": 5739429,
+      "mtime_ns": 1772551999000000000,
+      "sha256": "55015d01b5f86f1b08300ea361fed35af8179f7a442e75522706a89e3069a61d"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Cloud Data Platform & Databricks Implementation  _Repsol Sinopec_EMEA-23.pptx",
+      "size": 3490870,
+      "mtime_ns": 1772534913000000000,
+      "sha256": "d5baa743d067b2ad339ebf53d6b0fe92d4b93654138920640c139e59076ac853"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Codify & Visualise Production performance  _Repsol Sinopec_EMEA-26.pptx",
+      "size": 3487808,
+      "mtime_ns": 1772535219000000000,
+      "sha256": "3ea202fbf6059b710a54fea7b5496f859c981661624e5a48e59e64e6edc79a62"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Codify and Visualise Equipment Health  _Repsol Sinopec_EMEA-25.pptx",
+      "size": 3484371,
+      "mtime_ns": 1772535069000000000,
+      "sha256": "3ebccd05127908db7d3b7b5294d6b70bd03403cab21f88c4d9a2d3b2e0082905"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Computer Vision - Case Study Library.pptx",
+      "size": 8824195,
+      "mtime_ns": 1772553955000000000,
+      "sha256": "0818f65577df77379b10156671d5b88b298811a990b4191a90385f1e785accc0"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Computer Vision for Remote Monitoring of Crops_IGS_EMEA-05.pptx",
+      "size": 10798921,
+      "mtime_ns": 1772124325000000000,
+      "sha256": "260ca3363e213f80dea1bb7ef77ffd54c8b7d5fa78e9090126f14690e77c243c"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/CPG - Case Study Collection.pptx",
+      "size": 3338596,
+      "mtime_ns": 1772552942000000000,
+      "sha256": "f65085a1106e3503709a89b57341acbaa543901d8c3c1666053939d4d7cae8c3"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/CRM Migration_OVOEnergy_EMEA-44.pptx",
+      "size": 3333711,
+      "mtime_ns": 1772547287000000000,
+      "sha256": "a4bd43ce14231e381fc75b9748d99b7e28ecde2b4d4e8994646194e77ee1f429"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/CX and utilities - Case Study Collection.pptx",
+      "size": 3569765,
+      "mtime_ns": 1772553225000000000,
+      "sha256": "fcc79a2ef6a6476aa8440b48be775eb2943803a4066ba68c0ba09d4cd02987a0"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Data Mesh Readiness Assessment & Use Case Discovery _Morrisons_EMEA-37.pptx",
+      "size": 8365935,
+      "mtime_ns": 1772125045000000000,
+      "sha256": "a07348be23e7b0ecdba33c61c304f4778e0ccc1977334a8873ef965bacec0276"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Data Strategy & Implementation Roadmap _Zonal_EMEA-12.pptx",
+      "size": 3527998,
+      "mtime_ns": 1772529009000000000,
+      "sha256": "f13a4d9296d6305716116264159440d6f03a51a1fc6ed4095a1b601714e9353b"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Databricks Migration_IntentHQ_EMEA-01.pptx",
+      "size": 8111757,
+      "mtime_ns": 1771941319000000000,
+      "sha256": "eb3462fcca372e7deb762523ac12c342f7c830c4f13d768517041cfa5d0e7590"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Developing a POC Chatbot using Gen AI - with Solution Roadmap _Loveelectric_EMEA-42.pptx",
+      "size": 3497379,
+      "mtime_ns": 1772537014000000000,
+      "sha256": "0e0d5746bea1631bd51e9833ba36a228d5a5443600f50ff784638d4ef22ae28b"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Energy - Case Study Collection.pptx",
+      "size": 6130327,
+      "mtime_ns": 1772553361000000000,
+      "sha256": "c1e9cbaa84993a59212cf62faa15e6baf353c961b48e2cd1de2aa3a710ef826e"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Energy 2 - Case Study Collection.pptx",
+      "size": 5669024,
+      "mtime_ns": 1772553458000000000,
+      "sha256": "ddd0a5c6297423fd4caa36de47c59b56f77d7e069f5b7543aa179fa65ffdee9a"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Enhancing Data Capabilities and Analytics _Zumo_EMEA-20.pptx",
+      "size": 8065917,
+      "mtime_ns": 1772458160000000000,
+      "sha256": "5b7b949fd9e48cdf0f31fbc440d6966221f2078a5f41663b2d83afb153b0b605"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Example Case Study - EMEA-00.pptx",
+      "size": 3264321,
+      "mtime_ns": 1772547975000000000,
+      "sha256": "2e8fb66187d0ac80cb04d7a01d37772307171196c6bafaaf2776cca116ff5bff"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Fibre-First Pega CDH Transformation_Verizon_EMEA-56.pptx",
+      "size": 7736539,
+      "mtime_ns": 1772552507000000000,
+      "sha256": "e44dd12efeeb5a5b7feeafeec783cbdc6e5e41197527f05746ceb1e25fb2b8de"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/GenAI for Healthcare_Inizio_EMEA-33.pptx",
+      "size": 19144700,
+      "mtime_ns": 1771501321000000000,
+      "sha256": "9dd36ad540d539423db08396c59267290c0e0ecbf568efe879937817c8b52ba2"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Ingest 50+ Years of Wells Data & Automate Daily Performance Reporting  _Repsol Sinopec_EMEA-28.pptx",
+      "size": 3488153,
+      "mtime_ns": 1772534739000000000,
+      "sha256": "fd33238969b6e5d67df85657fd10cf24e2e58de00cb581576568f92d7c762be7"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Insourcing Marketing Mix Modelling_Upfield_EMEA-11.pptx",
+      "size": 9452212,
+      "mtime_ns": 1772557298000000000,
+      "sha256": "feea7078a4901903e0c39bf53efcdc7ed9de913ca92423e7fe9a3747a4383dc9"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Lead Profiling & Analytics_Citation_EMEA-49.pptx",
+      "size": 3489407,
+      "mtime_ns": 1772548496000000000,
+      "sha256": "3f6f444adf8b760518ec47ba2b7b29dc3670683cbf876522ff752dc3f00eace2"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/LLM for processing health and safety observations_Serica_EMEA-46.pptx",
+      "size": 3905558,
+      "mtime_ns": 1772547636000000000,
+      "sha256": "dd71121aa8529d9752fd704ec9cfb5fafd0ff666e6d230165592d7f791a18e8b"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/MaintenanceIQ_TotalEnergies_EMEA-10.pptx",
+      "size": 10378021,
+      "mtime_ns": 1771499803000000000,
+      "sha256": "29a00c84658dc2e2600d98a9b06f02e24db7340bd052da0e0c0e6b44a5090cb3"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Making Acquisition Decisions with Insights_Hachette_EMEA-18.pptx",
+      "size": 8059974,
+      "mtime_ns": 1772452557000000000,
+      "sha256": "a24142c5f477dbdc2d3e1c0a4d78227a2771ec2a4927c3073ed14afa98d74346"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Marketing Transformation_SSE Airtricity_EMEA-45.pptx",
+      "size": 3304170,
+      "mtime_ns": 1772547464000000000,
+      "sha256": "d49aca39ce04ccc46f156cd4531124a2b2df2861aa60f20a3b7b288ea8e30849"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Membership Reporting And Churn Modelling _GS1_EMEA-04.pptx",
+      "size": 9573682,
+      "mtime_ns": 1772452307000000000,
+      "sha256": "671a3f78a256ab56b024db54424032b6436d91c971190590247cb560bb6a3b2a"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Migrating and Centralising Data _Bloom_EMEA-17.pptx",
+      "size": 8045745,
+      "mtime_ns": 1772451995000000000,
+      "sha256": "0345dabf55b83b040d78180c98556c1793377ea646d313f749ea1c100fb5660a"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Operational & Strategic Business Intelligence _INEOS FPS_EMEA-19.pptx",
+      "size": 9056195,
+      "mtime_ns": 1772451833000000000,
+      "sha256": "fa99c9e3d58a54d14551f14d1fb7aaad7f04b24c601de8f19d34f3b15b29258f"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Optimising Investment for Margin & Growth_Beter Bed_EMEA-29.pptx",
+      "size": 8261240,
+      "mtime_ns": 1772451395000000000,
+      "sha256": "7fed4abee8e2f21de7d19bbd5fe7c11afad6c708e8d6c7aee68b1e41ccbaa64c"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Partnering to build a resilient modern digital team_Repsol Sinopec_EMEA-08.pptx",
+      "size": 3879295,
+      "mtime_ns": 1772534572000000000,
+      "sha256": "279241b84f372c0668c11775310c5bffced9192ca1ed50477e4f49801e09daed"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Pega CDH-Powered Personalisation Modernisation_NatWest_EMEA-54.pptx",
+      "size": 3523258,
+      "mtime_ns": 1772551787000000000,
+      "sha256": "ffc315d5a339d054173426a5c9d1d1cd1a30d3d98a7359274140812f4677b22a"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Predictive Analytics at Scale. Price Elasticity Modelling _PVM_EMEA-57.pptx",
+      "size": 3498131,
+      "mtime_ns": 1772554518000000000,
+      "sha256": "afdac69001e150613f910727c5f3cfec6dd09a84eebf6902099fd0101327548b"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Private GPT_Albacore_EMEA-51.pptx",
+      "size": 3484919,
+      "mtime_ns": 1772550317000000000,
+      "sha256": "606b023dec60c8014083fa6531595c2156797d22b954118704f5b7f024763e8b"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Promo Optimisation_Beter Bed_EMEA-14.pptx",
+      "size": 8663290,
+      "mtime_ns": 1772450934000000000,
+      "sha256": "707e5319f58611cff560623aa9edd746d95c12cb8663feb00e56304dc9e679c8"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Refactoring Commercial Steering Application Suite _BT_EMEA-13.pptx",
+      "size": 8372662,
+      "mtime_ns": 1772125343000000000,
+      "sha256": "12a2c7217a5667262fe13f5988e266952cfa2d6d38ad04eb3cc6a2df6768a4b1"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Retail fuel-pricing and strategy performance_CD&R_EMEA-39.pptx",
+      "size": 12570595,
+      "mtime_ns": 1772536244000000000,
+      "sha256": "76fdaf1b49ab5282a99f4ea4a8e3a57dbd998b39754239519e9533f0981d3ba8"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/RFP Response Generation_Franklin Templeton_EMEA-40.pptx",
+      "size": 8943518,
+      "mtime_ns": 1772536539000000000,
+      "sha256": "b633197d020ec1d1d3279265728478333fcdcd1dcce02276eae870db7534f92e"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Scylla Decommissioning_IntentHQ_EMEA-50.pptx",
+      "size": 3243270,
+      "mtime_ns": 1772549814000000000,
+      "sha256": "ec7bd44a2b3a9246fe536384822f88bfe663b140bd04c8e26f77c74f1b06d13a"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Secure Application to Capture HR Succession Data to Create Actionable Reporting _Repsol Sinopec_EMEA-27.pptx",
+      "size": 3488091,
+      "mtime_ns": 1772534337000000000,
+      "sha256": "78e5cf196537b1a522a8f2ad66963f5431936c36fb084b6c9a7a3ef4f3d37e1e"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Securing Compliance, Data Consolidation and Sharing_IntentHQ_EMEA-06.pptx",
+      "size": 8231014,
+      "mtime_ns": 1771941081000000000,
+      "sha256": "bd35d8416d58952be67f71e5d482011ba3d5f1692843caf88c5370182957d985"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Smart Stock_CVS_EMEA-31.pptx",
+      "size": 29749387,
+      "mtime_ns": 1771498778000000000,
+      "sha256": "778f5c4644bf55c9da5780f356def03a9742531ea50b0a827fcdc3170d0b1b9b"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Streamlining Financial Forecasting for Accuracy and Efficiency_Mondelez_EMEA-43.pptx",
+      "size": 3493098,
+      "mtime_ns": 1772537151000000000,
+      "sha256": "4c0925bff41cbe9a37bb856aa7284eadeadc04ea408db94ccfc1022feba166e3"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Supply Chain Performance Insights_Signify_EMEA-09.pptx",
+      "size": 8161249,
+      "mtime_ns": 1771939782000000000,
+      "sha256": "f27e78c539aee1c6b35833ad3cd7e36da42bc34e34655287bf261e766b304b37"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Transformative Customer Lifecycle Personalisation_CVS_EMEA-55.pptx",
+      "size": 4936163,
+      "mtime_ns": 1772552346000000000,
+      "sha256": "78ecd35fadce4f7a9bc37dc71cb40591fc3330153581fd5d9e1f2d3f95d92793"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Transforming Cloud Data for Instant Insights and Efficiency_Ferrero_EMEA-41.pptx",
+      "size": 3494910,
+      "mtime_ns": 1772536683000000000,
+      "sha256": "75ca52206bca33fd3809476e544a83262902ad8f944158ae94198337603d58d1"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Turning operational anomalies into daily action_OCS_EMEA-58.pptx",
+      "size": 7215801,
+      "mtime_ns": 1775143011000000000,
+      "sha256": "9cab7f43a348291a48fb842ad988404bafb1af3f007f314df81df553e46704c3"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Uncovering the Opportunity for Business Wide Transformation through Automation_CD&R_EMEA-28.pptx",
+      "size": 7046412,
+      "mtime_ns": 1772536048000000000,
+      "sha256": "92275ee920373528b3ebcf1c2957b52ee4f2bbf6d4a3b9fa549c0ce1a0522c51"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Understanding how to apply AI to unlock value within refinery operations_Nynas_EMEA-36.pptx",
+      "size": 8661516,
+      "mtime_ns": 1772124757000000000,
+      "sha256": "458324052be693fa71756cb03848ff10e5913be816b379513a89dc93e014a4e1"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Unity Catalog Implementation and Acceleration_Repsol Sinopec_EMEA-30.pptx",
+      "size": 8351362,
+      "mtime_ns": 1771939110000000000,
+      "sha256": "376911832f2333b25b1dabc9963cfe80592748ad532d4020a203cbf884feb57c"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Using AI to Automate Invoice Processing_Mitratech_(_158).pptx",
+      "size": 7733977,
+      "mtime_ns": 1772551050000000000,
+      "sha256": "8f7ef6a98428b3166f0a7df8c58339985034ea39314ac5aad1fe64d17efb0cbd"
+    },
+    {
+      "path": "/mnt/c/Users/AparnaAsokan/OneDrive - Blend 360/Commercial Team EMEA - Individual Case Studies/Workplace Optimisation_CVS_EMEA-03.pptx",
+      "size": 4187120,
+      "mtime_ns": 1771497902000000000,
+      "sha256": "52c0402e4ad31c6db46a372826ac08646dfcf78e5fe1f093536b0a264be2290c"
+    }
+  ]
+}

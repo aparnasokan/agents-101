@@ -1,0 +1,138 @@
+[
+  {
+    "id": "agent_loop",
+    "title": "Agent Loop",
+    "topics": [
+      "agent",
+      "agentic",
+      "planning",
+      "observe",
+      "reflect"
+    ],
+    "difficulty": "beginner",
+    "intent": [
+      "concept"
+    ],
+    "file": "visuals/agent_loop.svg"
+  },
+  {
+    "id": "rag_pipeline",
+    "title": "RAG Pipeline",
+    "topics": [
+      "rag",
+      "retrieval",
+      "embeddings",
+      "knowledge base",
+      "faiss",
+      "chunk"
+    ],
+    "difficulty": "beginner",
+    "intent": [
+      "concept",
+      "implementation"
+    ],
+    "file": "visuals/rag_pipeline.svg"
+  },
+  {
+    "id": "tool_calling",
+    "title": "Tool Calling",
+    "topics": [
+      "tool calling",
+      "function calling",
+      "api",
+      "mcp",
+      "integration"
+    ],
+    "difficulty": "beginner",
+    "intent": [
+      "concept",
+      "implementation"
+    ],
+    "file": "visuals/tool_calling.svg"
+  },
+  {
+    "id": "multi_agent_orchestration",
+    "title": "Multi-Agent Orchestration",
+    "topics": [
+      "multi-agent",
+      "orchestrator",
+      "handoff",
+      "coordination",
+      "routing"
+    ],
+    "difficulty": "intermediate",
+    "intent": [
+      "concept",
+      "implementation"
+    ],
+    "file": "visuals/multi_agent_orchestration.svg"
+  },
+  {
+    "id": "context_engineering",
+    "title": "Context Engineering",
+    "topics": [
+      "context engineering",
+      "context",
+      "memory",
+      "prompt",
+      "state"
+    ],
+    "difficulty": "intermediate",
+    "intent": [
+      "concept",
+      "production"
+    ],
+    "file": "visuals/context_engineering.svg"
+  },
+  {
+    "id": "evals_pipeline",
+    "title": "Agent Evaluation Pipeline",
+    "topics": [
+      "eval",
+      "evaluation",
+      "judge",
+      "regression",
+      "golden dataset",
+      "test"
+    ],
+    "difficulty": "advanced",
+    "intent": [
+      "production"
+    ],
+    "file": "visuals/evals_pipeline.svg"
+  },
+  {
+    "id": "production_agent_stack",
+    "title": "Production Agent Stack",
+    "topics": [
+      "production",
+      "deploy",
+      "observability",
+      "guardrail",
+      "monitor",
+      "latency",
+      "cost"
+    ],
+    "difficulty": "advanced",
+    "intent": [
+      "production"
+    ],
+    "file": "visuals/production_agent_stack.svg"
+  },
+  {
+    "id": "agent_vs_llm",
+    "title": "LLM Call vs AI Agent",
+    "topics": [
+      "difference",
+      "llm",
+      "agent",
+      "regular llm call",
+      "compare"
+    ],
+    "difficulty": "beginner",
+    "intent": [
+      "concept"
+    ],
+    "file": "visuals/agent_vs_llm.svg"
+  }
+]

@@ -23,7 +23,7 @@ Examples of OFF-TOPIC questions:
 - Personal advice, recipes, travel, news, math problems, etc.
 
 Available agents (only used when on-topic):
-- "concept" : explaining what agents are, how they work, theory, definitions — ALWAYS pair with "viz"
+- "concept" : explaining what agents are, how they work, theory, definitions — If "concept" is selected and the explanation would benefit from a visual, include "viz".
 - "viz"     : the Visual agent that generates an SVG diagram to accompany concept explanations — always fired alongside "concept"
 - "code"    : code examples, implementation patterns, how to build something
 - "bp"      : best practices, anti-patterns, gotchas, dos and don'ts
@@ -31,11 +31,18 @@ Available agents (only used when on-topic):
 - "deploy"  : hosting, production, evals, testing, observability, cost management, reliability, scaling, safety
 - "scribe"  : ONLY when explicitly asked to generate a summary, cheat sheet, or document
 
-Routing rules (on-topic questions only):
-- "concept" and "viz" MUST always be fired together
-- You may fire multiple agents e.g. ["concept", "viz", "code"]
-- "scribe" only fires if the user explicitly asks for a cheat sheet or summary
-- Default to "concept" if the intent is unclear
+Routing rules:
+- Do NOT always include "concept" and "viz".
+- Only include "concept" when the user asks for an explanation, definition, comparison, overview, or beginner-friendly answer.
+- Only include "viz" when "concept" is included AND a diagram would help.
+- For targeted implementation questions, route to "code" without "concept" unless the user asks for explanation too.
+- For production, deployment, evals, observability, cost, reliability, or safety questions, route to "deploy" and optionally "bp".
+- For best-practice, anti-pattern, pitfalls, or "what should we avoid" questions, route to "bp".
+- For tool calling, MCP, APIs, integrations, or external systems, route to "mcp" and optionally "code".
+- For advanced or intermediate questions, avoid "concept" unless the question explicitly asks for conceptual framing.
+- "scribe" only fires if the user explicitly asks for a cheat sheet or summary.
+- Default to the single most relevant specialist agent if intent is clear.
+- Default to "concept" only if the user intent is unclear or beginner-oriented.
 
 Output ONLY valid JSON — no explanation, no markdown.
 

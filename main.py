@@ -24,6 +24,21 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 load_dotenv()
+# ---- Optional RAG / Visual retrieval imports ----
+# Keep these global so startup/lifespan and pipeline code can reference them safely.
+try:
+    from rag import rag_store
+except Exception as exc:
+    rag_store = None
+    print(f"[RAG] disabled: {exc}")
+
+try:
+    from visual_store import visual_store
+except Exception as exc:
+    visual_store = None
+    print(f"[Visual] disabled: {exc}")
+# -----------------------------------------------
+
 
 from agents.base import get_azure_openai_config
 
@@ -43,7 +58,6 @@ from agents.best_practices import BestPracticesAgent
 from agents.mcp_agent import McpAgent
 from agents.deploy import DeployAgent
 from agents.scribe import ScribeAgent
-from rag import rag_store
 
 
 def should_auto_open_browser() -> bool:
@@ -99,7 +113,7 @@ class RouteResponse(BaseModel):
 # ── Core pipeline ────────────────────────────────────────────────────────────
 
 def normalize_agents(agents: list[str], enforce_pairs: bool = True) -> list[str]:
-    """Keep routing predictable and optionally enforce concept+viz pairing."""
+    """Keep routing predictable without forcing concept/viz for targeted questions."""
     normalized: list[str] = []
     for agent in agents or ["concept"]:
         if agent not in normalized:
@@ -108,9 +122,6 @@ def normalize_agents(agents: list[str], enforce_pairs: bool = True) -> list[str]
     if enforce_pairs and "concept" in normalized and "viz" not in normalized:
         concept_idx = normalized.index("concept")
         normalized.insert(concept_idx + 1, "viz")
-    elif enforce_pairs and "viz" in normalized and "concept" not in normalized:
-        viz_idx = normalized.index("viz")
-        normalized.insert(viz_idx, "concept")
 
     return normalized or ["concept"]
 
@@ -392,30 +403,6 @@ AGENT_PERSPECTIVE_HINTS = {
 }
 
 
-
-def build_concept_messages(user_message: str, history: list[dict], manual_selection: bool = False) -> list[dict]:
-    """Build Concept-agent messages with RAG context prepended when available."""
-    if manual_selection:
-        base_messages = build_manual_agent_messages("concept", user_message, history)
-    else:
-        base_messages = history
-
-    try:
-        rag_context = rag_store.build_context_message(user_message)
-    except Exception as exc:
-        print(f"[RAG] Retrieval skipped: {exc}")
-        rag_context = ""
-
-    if not rag_context:
-        print("[RAG] Concept agent running without retrieved context")
-        return base_messages
-
-    print(f"[RAG] Injecting {len(rag_context):,} characters of retrieved context into Concept agent")
-    return [
-        {"role": "system", "content": rag_context},
-        *base_messages,
-    ]
-
 def build_manual_agent_messages(agent_key: str, user_message: str, history: list[dict]) -> list[dict]:
     prompt = user_message.strip()
 
@@ -449,6 +436,101 @@ async def run_agent(agent_key: str, messages: list[dict]) -> AgentResponse:
     is_viz = agent_key == "viz"
     return AgentResponse(agent=agent_key, content=result, is_viz=is_viz)
 
+
+
+
+def _insert_rag_context(messages: list[dict], rag_context: str) -> list[dict]:
+    """Insert retrieved context immediately before the latest user message."""
+    if not rag_context:
+        return messages
+    context_message = {
+        "role": "user",
+        "content": (
+            "Retrieved knowledge-base context for the next answer. "
+            "Use it first, cite sources inline using [1], [2], etc., and include a short "
+            "Sources Used section if you rely on it.\n\n"
+            f"{rag_context}"
+        ),
+    }
+    if messages and messages[-1].get("role") == "user":
+        return [*messages[:-1], context_message, messages[-1]]
+    return [*messages, context_message]
+
+
+def build_concept_messages(user_message: str, history: list[dict], manual_selection: bool = False) -> list[dict]:
+    """Build Concept messages with RAG context when available."""
+    messages = build_manual_agent_messages("concept", user_message, history) if manual_selection else list(history)
+    rag_context = ""
+    if rag_store is not None:
+        try:
+            rag_context = rag_store.build_context_message(user_message)
+        except Exception as exc:
+            print(f"[RAG] Retrieval skipped: {exc}")
+    else:
+        print("[RAG] Retrieval skipped: rag_store unavailable")
+    if rag_context:
+        return _insert_rag_context(messages, rag_context)
+    print("[RAG] Concept agent running without retrieved context")
+    return messages
+
+
+
+def get_last_rag_sources() -> list[dict]:
+    """Return sources from the latest RAG retrieval, if the current rag.py exposes them."""
+    if rag_store is None:
+        return []
+    try:
+        if hasattr(rag_store, "get_last_sources"):
+            sources = rag_store.get_last_sources()
+        else:
+            sources = getattr(rag_store, "last_sources", [])
+        return list(sources or [])
+    except Exception as exc:
+        print(f"[RAG] Could not read last sources: {exc}")
+        return []
+
+
+def append_sources_used_if_missing(content: str, sources: list[dict]) -> str:
+    """Deterministically append sources so attribution appears even if the model forgets."""
+    if not content or not sources:
+        return content
+    if "sources used" in content.lower():
+        return content
+
+    lines = []
+    seen = set()
+    for source in sources:
+        number = source.get("number") or len(lines) + 1
+        name = str(source.get("source") or "Unknown source").strip()
+        content_type = str(source.get("content_type") or "document").strip()
+        category = str(source.get("category") or "general").strip()
+        key = (number, name)
+        if key in seen:
+            continue
+        seen.add(key)
+        lines.append(f"[{number}] {name} — {content_type}, {category}")
+
+    if not lines:
+        return content
+    return content.rstrip() + "\n\n**Sources Used**\n" + "\n".join(f"- {line}" for line in lines)
+
+def get_visual_response(user_message: str, routing: dict, concept_response: AgentResponse | None, manual_selection: bool, history: list[dict]) -> AgentResponse | None:
+    """Prefer trusted library visuals; fall back to VizAgent template generation."""
+    if visual_store is not None:
+        try:
+            # asset = visual_store.search(
+            #     query=user_message,
+            #     topic=str(routing.get("topic", "")),
+            #     difficulty=str(routing.get("difficulty", "")),
+            # )
+            asset = visual_store.search(user_message)
+            if asset:
+                print(f"[Visual] Using library visual: id={asset.get('id')} score={asset.get('score', 0):.3f} file={asset.get('file')}")
+                return AgentResponse(agent="viz", content=asset["content"], is_viz=True)
+            print("[Visual] No library visual matched; falling back to Viz agent")
+        except Exception as exc:
+            print(f"[Visual] Library lookup failed: {exc}; falling back to Viz agent")
+    return None
 
 def _routing_steps(raw_steps: object) -> list[str]:
     if isinstance(raw_steps, str):
@@ -630,7 +712,7 @@ async def run_pipeline(user_message: str, routing: dict | None = None) -> ChatRe
     concept_task = None
     if concept_requested:
         print("[Pipeline] Firing concept first so viz can support it")
-        concept_messages = build_concept_messages(user_message, history, manual_selection=manual_selection)
+        concept_messages = build_concept_messages(user_message, history, manual_selection)
         concept_task = asyncio.create_task(run_agent("concept", concept_messages))
 
     other_tasks = []
@@ -649,16 +731,23 @@ async def run_pipeline(user_message: str, routing: dict | None = None) -> ChatRe
     concept_response: AgentResponse | None = None
     if concept_task is not None:
         concept_response = await concept_task
+        rag_sources = get_last_rag_sources()
+        if rag_sources:
+            concept_response.content = append_sources_used_if_missing(concept_response.content, rag_sources)
         responses_by_agent["concept"] = concept_response
 
     if viz_requested:
-        viz_messages = [{"role": "user", "content": user_message}]
-        if manual_selection:
-            viz_messages = build_manual_agent_messages("viz", user_message, history)
-        elif concept_response is not None and concept_response.content.strip():
-            viz_messages = build_viz_messages(user_message, concept_response.content)
-        print("[Pipeline] Firing viz from concept output")
-        responses_by_agent["viz"] = await run_agent("viz", viz_messages)
+        library_visual = get_visual_response(user_message, routing, concept_response, manual_selection, history)
+        if library_visual is not None:
+            responses_by_agent["viz"] = library_visual
+        else:
+            viz_messages = [{"role": "user", "content": user_message}]
+            if manual_selection:
+                viz_messages = build_manual_viz_messages(user_message, history)
+            elif concept_response is not None and concept_response.content.strip():
+                viz_messages = build_viz_messages(user_message, concept_response.content)
+            print("[Pipeline] Firing viz from concept output")
+            responses_by_agent["viz"] = await run_agent("viz", viz_messages)
 
     if other_tasks:
         other_results = await asyncio.gather(*other_tasks)
@@ -693,12 +782,27 @@ async def lifespan(app: FastAPI):
     print(f"   Agents loaded: {len(AGENTS)}")
     print(f"   Azure deployment: {AZURE_OPENAI_CONFIG['deployment']}")
     print(f"   UI: {local_url}")
-    print("   RAG: enabled" if rag_store.enabled else "   RAG: disabled — set AZURE_OPENAI_EMBEDDING_DEPLOYMENT to enable")
-    if rag_store.enabled:
+    if rag_store is not None:
         try:
             rag_store.ensure_ready()
+            if getattr(rag_store, "ready", False):
+                print(f"   RAG: ready ({len(getattr(rag_store, 'chunks', []))} chunks)")
+            else:
+                print("   RAG: enabled but index not ready")
         except Exception as exc:
             print(f"   RAG index unavailable: {exc}")
+    else:
+        print("   RAG: disabled")
+
+    if visual_store is not None:
+        try:
+            count = visual_store.count()
+            print(f"   Visual library: ready ({count} visuals)")
+        except Exception as exc:
+            print(f"   Visual library unavailable: {exc}")
+    else:
+        print("   Visual library: disabled")
+
     print("   Browser auto-open: enabled" if should_auto_open_browser() else "   Browser auto-open: disabled")
     print("─" * 40)
     if should_auto_open_browser():
@@ -761,17 +865,6 @@ async def scribe():
     session.record_agents_fired(1)
     return {"content": result, "stats": session.get_stats()}
 
-
-
-@app.post("/api/rag/reindex")
-async def rag_reindex():
-    """Rebuild the local FAISS index after adding/changing workshop or deck files."""
-    try:
-        rebuilt = rag_store.rebuild()
-        return {"rebuilt": rebuilt, "source_dir": str(rag_store.source_dir), "index_dir": str(rag_store.index_dir)}
-    except Exception as e:
-        print(f"[Error] RAG reindex failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/stats")
 async def stats():
