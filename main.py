@@ -525,8 +525,16 @@ def get_visual_response(user_message: str, routing: dict, concept_response: Agen
             # )
             asset = visual_store.search(user_message)
             if asset:
-                print(f"[Visual] Using library visual: id={asset.get('id')} score={asset.get('score', 0):.3f} file={asset.get('file')}")
-                return AgentResponse(agent="viz", content=asset["content"], is_viz=True)
+                print(
+                    f"[Visual] Using library visual: "
+                    f"id={asset.id} score={asset.score:.3f} file={asset.file}"
+                )
+
+                return AgentResponse(
+                    agent="viz",
+                    content=asset.content,
+                    is_viz=True,
+                )
             print("[Visual] No library visual matched; falling back to Viz agent")
         except Exception as exc:
             print(f"[Visual] Library lookup failed: {exc}; falling back to Viz agent")
